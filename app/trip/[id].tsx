@@ -132,7 +132,7 @@ const [weatherError, setWeatherError]   = useState('');
     },
 
     pillSelected: {
-      backgroundColor: colours.textPrimary,
+      backgroundColor: colours.primary,
     },
 
     pillText: {
@@ -445,10 +445,16 @@ pillTextSelected: {
         <EmptyState
           title={activities.length === 0 ? "Nothing planned yet" : "No activities match"}
           subtitle={
-            activities.length === 0
-              ? "Start building your itinerary by adding your first activity"
-              : "Try a different date range or category"
-          }
+  activities.length === 0
+    ? "Start building your itinerary by adding your first activity"
+    : `Filtering by ${
+        selectedCategory
+          ? uniqueCategories.find(c => c.categoryId === selectedCategory)?.categoryName
+          : 'all categories'
+      }${dateFrom ? ` from ${dateFrom}` : ''}${
+        dateTo ? ` to ${dateTo}` : ''
+      }`
+}
           actionLabel={activities.length === 0 ? "Add activity" : "Clear filters"}
           onAction={activities.length === 0 ? () => router.push(`/trip/${id}/add-activity`) : clearFilters}
         />

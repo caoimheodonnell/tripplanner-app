@@ -1,6 +1,7 @@
 import { useTheme } from '@/context/ThemeContext';
 import { db } from '@/db/client';
 import { activitiesTable, categoriesTable, tripsTable } from '@/db/schema';
+import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { eq } from 'drizzle-orm';
 import * as FileSystem from 'expo-file-system/legacy';
@@ -258,12 +259,15 @@ const path = (FileSystem as any).documentDirectory + 'tripplanner-export.csv';
           </View>
           <View style={[styles.statCard, { flex: 1 }]}>
             <Text style={styles.statLabel}>Hours</Text>
-            <Text style={styles.statValue}>{totalHours}</Text>
+            <Text style={styles.statValue}>
+            {totalHours}
+            <Text style={{ fontSize: 16, fontWeight: '400' }}> hrs</Text>
+          </Text>
           </View>
         </View>
 
         <View style={[styles.streakCard, streak > 0 && styles.streakCardActive]}>
-  <Text style={styles.streakEmoji}>🔥</Text>
+  <Ionicons name="flame-outline" size={28} color={colours.primary} />
   <View>
     <Text style={styles.streakNum}>{streak} day{streak !== 1 ? 's' : ''}</Text>
     <Text style={styles.streakLabel}>

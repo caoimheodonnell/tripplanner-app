@@ -37,7 +37,7 @@ export default function ProfileScreen() {
     title:   { fontSize: 28, fontWeight: '800', color: colours.textPrimary },
 
     sectionRow:   { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-    sectionHeader:{ fontSize: 13, fontWeight: '700', color: colours.textSecondary, textTransform: 'uppercase', letterSpacing: 0.8 },
+    sectionHeader:{ fontSize: 13, fontWeight: '700', color: colours.textSecondary, textTransform: 'uppercase', letterSpacing: 1.2 },
     addLink:      { color: colours.primary, fontWeight: '700', fontSize: 14 },
 
     form:   { backgroundColor: colours.surface, borderRadius: 14, padding: 16, borderWidth: 1, borderColor: colours.border, gap: 10 },
@@ -259,7 +259,7 @@ if (user) setUserName(user.name);
     Alert.alert('Reminders on!', "You'll get a reminder at 8pm every day.");
   }
 
-  // ── Render ────────────────────────────────────────────────────────────────
+  
 
   return (
     <SafeAreaView style={styles.safe}>
@@ -276,7 +276,7 @@ if (user) setUserName(user.name);
 </View>
 
 
-        {/* ── Targets ── */}
+        {/*Targets*/}
         <View style={styles.sectionRow}>
           <Text style={styles.sectionHeader}>Targets</Text>
           <TouchableOpacity onPress={() => {
@@ -289,7 +289,7 @@ if (user) setUserName(user.name);
           </TouchableOpacity>
         </View>
 
-        {/* Add / Edit form */}
+        {/* Add and Edit form */}
         {showForm && (
           <View style={styles.form}>
             <Text style={styles.inputLabel}>Label</Text>
@@ -384,7 +384,7 @@ if (user) setUserName(user.name);
           );
         })}
 
-        {/* ── Reminders ── */}
+        {/* Reminders */}
         <Text style={styles.sectionHeader}>Reminders</Text>
         <View style={styles.card}>
           <View style={styles.notifRow}>
@@ -401,7 +401,7 @@ if (user) setUserName(user.name);
           </View>
         </View>
 
-        {/* ── Appearance ── */}
+        
         <Text style={styles.sectionHeader}>Appearance</Text>
         <View style={styles.card}>
           <View style={styles.notifRow}>
@@ -418,16 +418,30 @@ if (user) setUserName(user.name);
           </View>
         </View>
 
-        {/* ── Account ── */}
+        
         <Text style={styles.sectionHeader}>Account</Text>
+
         <View style={styles.card}>
-          <TouchableOpacity onPress={handleLogout}>
+
+          <TouchableOpacity
+            onPress={handleLogout}
+            style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}
+          >
+            <Ionicons name="log-out-outline" size={18} color={colours.primary} />
             <Text style={styles.logoutText}>Log Out</Text>
           </TouchableOpacity>
+
           <View style={styles.divider} />
-          <TouchableOpacity onPress={handleDeleteAccount}>
+
+          
+          <TouchableOpacity
+            onPress={handleDeleteAccount}
+            style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}
+          >
+            <Ionicons name="trash-outline" size={18} color={colours.error} />
             <Text style={styles.deleteText}>Delete Account</Text>
           </TouchableOpacity>
+
         </View>
 
       </ScrollView>
