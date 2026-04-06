@@ -1,6 +1,7 @@
-import { colours } from '@/constants/colours';
+import { useTheme } from '@/context/ThemeContext';
 import { db } from '@/db/client';
 import { activitiesTable, categoriesTable } from '@/db/schema';
+import { Ionicons } from '@expo/vector-icons';
 import { eq } from 'drizzle-orm';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
@@ -23,6 +24,25 @@ export default function EditActivityScreen() {
   const [notes, setNotes]       = useState('');
   const [categories, setCategories]   = useState<Category[]>([]);
   const [selectedCat, setSelectedCat] = useState<number | null>(null);
+  const { colours } = useTheme();
+
+  const styles = StyleSheet.create({
+  safe:    { flex: 1, backgroundColor: colours.background },
+  content: { padding: 20, gap: 20 },
+  header:  { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8, paddingTop: 50 },
+  cancel:  { fontSize: 16, color: colours.textSecondary },
+  title:   { fontSize: 18, fontWeight: '700', color: colours.textPrimary },
+  save:    { fontSize: 16, fontWeight: '700', color: colours.primary },
+  field:   { gap: 6 },
+  label:   { fontSize: 13, fontWeight: '600', color: colours.textSecondary, textTransform: 'uppercase', letterSpacing: 0.4 },
+  input:   { backgroundColor: colours.surface, borderWidth: 1, borderColor: colours.border, borderRadius: 10, paddingHorizontal: 14, paddingVertical: 12, fontSize: 16, color: colours.textPrimary },
+  textarea: { height: 90, textAlignVertical: 'top', paddingTop: 12 },
+  catRow:  { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
+  catPill: { backgroundColor: colours.surface, borderWidth: 1, borderColor: colours.border, borderRadius: 999, paddingHorizontal: 12, paddingVertical: 8 },
+  catPillText: { fontSize: 13, fontWeight: '600', color: colours.textPrimary },
+  deleteBtn: { backgroundColor: '#FEF2F2', borderWidth: 1, borderColor: '#FCA5A5', borderRadius: 10, paddingVertical: 14, alignItems: 'center', marginTop: 8 },
+  deleteBtnText: { color: '#7F1D1D', fontWeight: '700', fontSize: 15 },
+});
 
   useEffect(() => {
     async function load() {
@@ -93,9 +113,16 @@ export default function EditActivityScreen() {
               <TouchableOpacity key={cat.id} onPress={() => setSelectedCat(cat.id)}
                 style={[styles.catPill, selectedCat === cat.id && { backgroundColor: cat.colour, borderColor: cat.colour }]}
                 accessibilityLabel={`Select ${cat.name}`}>
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                <Ionicons
+                  name={cat.icon as any}
+                  size={14}
+                  color={selectedCat === cat.id ? '#fff' : colours.textPrimary}
+                />
                 <Text style={[styles.catPillText, selectedCat === cat.id && { color: '#fff' }]}>
-                  {cat.icon} {cat.name}
+                  {cat.name}
                 </Text>
+              </View>
               </TouchableOpacity>
             ))}
           </View>
@@ -117,20 +144,3 @@ export default function EditActivityScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  safe:    { flex: 1, backgroundColor: colours.background },
-  content: { padding: 20, gap: 20 },
-  header:  { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8, paddingTop: 50 },
-  cancel:  { fontSize: 16, color: colours.textSecondary },
-  title:   { fontSize: 18, fontWeight: '700', color: colours.textPrimary },
-  save:    { fontSize: 16, fontWeight: '700', color: colours.primary },
-  field:   { gap: 6 },
-  label:   { fontSize: 13, fontWeight: '600', color: colours.textSecondary, textTransform: 'uppercase', letterSpacing: 0.4 },
-  input:   { backgroundColor: colours.surface, borderWidth: 1, borderColor: colours.border, borderRadius: 10, paddingHorizontal: 14, paddingVertical: 12, fontSize: 16, color: colours.textPrimary },
-  textarea: { height: 90, textAlignVertical: 'top', paddingTop: 12 },
-  catRow:  { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
-  catPill: { backgroundColor: colours.surface, borderWidth: 1, borderColor: colours.border, borderRadius: 999, paddingHorizontal: 12, paddingVertical: 8 },
-  catPillText: { fontSize: 13, fontWeight: '600', color: colours.textPrimary },
-  deleteBtn: { backgroundColor: '#FEF2F2', borderWidth: 1, borderColor: '#FCA5A5', borderRadius: 10, paddingVertical: 14, alignItems: 'center', marginTop: 8 },
-  deleteBtnText: { color: '#7F1D1D', fontWeight: '700', fontSize: 15 },
-});

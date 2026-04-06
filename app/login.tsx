@@ -1,6 +1,7 @@
 import { useTheme } from '@/context/ThemeContext';
 import { db } from '@/db/client';
 import { usersTable } from '@/db/schema';
+import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { eq } from 'drizzle-orm';
 import { useRouter } from 'expo-router';
@@ -21,7 +22,7 @@ export default function LoginScreen() {
   const [password, setPassword] = useState('');
   const { colours } = useTheme();
 
-  // ✅ FIX: styles inside component
+  
   const styles = StyleSheet.create({
     safe: { flex: 1, backgroundColor: colours.background },
 
@@ -152,7 +153,10 @@ export default function LoginScreen() {
   return (
     <SafeAreaView style={styles.safe}>
       <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
-        <Text style={styles.logo}>✈️ TripPlanner</Text>
+        <View style={{ flexDirection: 'row', justifyContent: 'center', alignItems: 'center', gap: 6 }}>
+  <Ionicons name="airplane-outline" size={28} color={colours.textPrimary} />
+  <Text style={styles.logo}>TripPlanner</Text>
+</View>
         <Text style={styles.tagline}>Plan your adventures</Text>
 
         <View style={styles.toggleRow}>

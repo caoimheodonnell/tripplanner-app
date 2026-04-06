@@ -9,8 +9,9 @@ import {
 } from './schema';
 
 export async function seedIfEmpty() {
-  const existing = await db.select().from(tripsTable);
-if (existing.length > 0) return;
+  
+const existingCats = await db.select().from(categoriesTable);
+if (existingCats.length > 0) return;
 
   
   await db.run(sql`
@@ -141,12 +142,13 @@ if (existing.length > 0) return;
   
   await db.insert(targetsTable).values([
     {
-      label: 'Daily Activity Goal',
-      period: 'daily',
-      targetValue: 180,
-      userId: user.id,
-      unit: 'minutes',
-      createdAt: new Date().toISOString(),
-    },
+    label: 'Visit 3 sightseeing places',
+    period: 'weekly',               
+    targetValue: 3,
+    userId: user.id,
+    unit: 'activities',               
+    categoryId: categories[0].id,     
+    createdAt: new Date().toISOString(),
+  },
   ]);
 }

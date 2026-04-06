@@ -1,4 +1,4 @@
-import { colours } from '@/constants/colours';
+import { useTheme } from '@/context/ThemeContext';
 import { db } from '@/db/client';
 import { tripsTable } from '@/db/schema';
 import { eq } from 'drizzle-orm';
@@ -20,6 +20,24 @@ export default function EditTripScreen() {
   const [startDate, setStartDate]     = useState('');
   const [endDate, setEndDate]         = useState('');
   const [notes, setNotes]             = useState('');
+  const { colours } = useTheme();
+
+  const styles = StyleSheet.create({
+  safe:    { flex: 1, backgroundColor: colours.background },
+  content: { padding: 20, gap: 20 },
+  header: {
+    flexDirection: 'row', alignItems: 'center',
+    justifyContent: 'space-between', marginBottom: 8, paddingTop: 50,
+  },
+  cancel: { fontSize: 16, color: colours.textSecondary },
+  title:  { fontSize: 18, fontWeight: '700', color: colours.textPrimary },
+  save:   { fontSize: 16, fontWeight: '700', color: colours.primary },
+  saveDisabled: { color: colours.textMuted },
+  field:  { gap: 6 },
+  label: { fontSize: 13, fontWeight: '600', color: colours.textSecondary, textTransform: 'uppercase', letterSpacing: 0.4 },
+  input: { backgroundColor: colours.surface, borderWidth: 1, borderColor: colours.border, borderRadius: 10, paddingHorizontal: 14, paddingVertical: 12, fontSize: 16, color: colours.textPrimary },
+  textarea: { height: 90, textAlignVertical: 'top', paddingTop: 12 },
+});
 
   useEffect(() => {
     async function load() {
@@ -90,19 +108,3 @@ export default function EditTripScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  safe:    { flex: 1, backgroundColor: colours.background },
-  content: { padding: 20, gap: 20 },
-  header: {
-    flexDirection: 'row', alignItems: 'center',
-    justifyContent: 'space-between', marginBottom: 8, paddingTop: 50,
-  },
-  cancel: { fontSize: 16, color: colours.textSecondary },
-  title:  { fontSize: 18, fontWeight: '700', color: colours.textPrimary },
-  save:   { fontSize: 16, fontWeight: '700', color: colours.primary },
-  saveDisabled: { color: colours.textMuted },
-  field:  { gap: 6 },
-  label: { fontSize: 13, fontWeight: '600', color: colours.textSecondary, textTransform: 'uppercase', letterSpacing: 0.4 },
-  input: { backgroundColor: colours.surface, borderWidth: 1, borderColor: colours.border, borderRadius: 10, paddingHorizontal: 14, paddingVertical: 12, fontSize: 16, color: colours.textPrimary },
-  textarea: { height: 90, textAlignVertical: 'top', paddingTop: 12 },
-});

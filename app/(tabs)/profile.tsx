@@ -1,13 +1,13 @@
 import EmptyState from '@/components/EmptyState';
 import { useTheme } from '@/context/ThemeContext';
 import { db } from '@/db/client';
-import { activitiesTable, targetsTable, usersTable } from '@/db/schema';
+import { activitiesTable, categoriesTable, targetsTable, usersTable } from '@/db/schema';
 import { cancelAllReminders, requestNotificationPermission, scheduleDailyReminder } from '@/utils/notifications';
 import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { eq } from 'drizzle-orm';
-import { useRouter } from 'expo-router';
-import { useEffect, useState } from 'react';
+import { useFocusEffect, useRouter } from 'expo-router';
+import { useCallback, useState } from 'react';
 import {
   Alert, Linking, SafeAreaView, ScrollView,
   StyleSheet, Switch, Text, TextInput,
@@ -30,6 +30,9 @@ export default function ProfileScreen() {
   const [editingId, setEditingId]     = useState<number | null>(null);
   const [notificationsOn, setNotificationsOn] = useState(false);
   const [userName, setUserName] = useState('');
+  const [selectedCategory, setSelectedCategory] = useState<number | null>(null);
+  const [categories, setCategories] = useState<any[]>([]);
+
 
   const styles = StyleSheet.create({
     safe:    { flex: 1, backgroundColor: colours.background },
@@ -97,6 +100,9 @@ greetingName: {
     const userId = await AsyncStorage.getItem('userId');
     if (!userId) return;
 
+
+const cats = await db.select().from(categoriesTable);
+setCategories(cats);
      
 const [user] = await db
   .select()
@@ -139,7 +145,11 @@ if (user) setUserName(user.name);
         .from(activitiesTable)
         .where(eq(activitiesTable.userId, Number(userId)));
 
-      const inRange = acts.filter(a => a.date >= start && a.date <= today);
+      const inRange = acts.filter(a =>
+        a.date >= start &&
+        (!target.categoryId || a.categoryId === target.categoryId)
+      );
+
 
       if (target.unit === 'activities') {
         prog[target.id] = inRange.length;
@@ -152,44 +162,51 @@ if (user) setUserName(user.name);
     setProgress(prog);
   }
 
-  useEffect(() => {
-    async function init() {
-      await load();
-      const saved = await AsyncStorage.getItem('notifications');
-      setNotificationsOn(saved === 'true');
-    }
-    init();
-  }, []);
+  useFocusEffect(
+  useCallback(() => {
+    load();
+  }, [])
+);
 
   
 
   async function handleSave() {
-    if (!label.trim() || !targetValue) {
-      Alert.alert('Fill in all fields');
-      return;
-    }
-
-    const userId = await AsyncStorage.getItem('userId');
-    if (!userId) return;
-
-    if (editingId) {
-      await db.update(targetsTable).set({
-        label: label.trim(), period,
-        targetValue: Number(targetValue), unit,
-        userId: Number(userId),
-      }).where(eq(targetsTable.id, editingId));
-    } else {
-      await db.insert(targetsTable).values({
-        label: label.trim(), period,
-        targetValue: Number(targetValue), unit,
-        userId: Number(userId),
-        createdAt: new Date().toISOString(),
-      });
-    }
-
-    setLabel(''); setTargetValue(''); setEditingId(null); setShowForm(false);
-    load();
+  if (!label.trim() || !targetValue) {
+    Alert.alert('Fill in all fields');
+    return;
   }
+
+  const userId = await AsyncStorage.getItem('userId');
+  if (!userId) return;
+
+  const payload = {
+    label: label.trim(),
+    period,
+    targetValue: Number(targetValue),
+    unit,
+    userId: Number(userId),
+    categoryId: selectedCategory, 
+  };
+
+  if (editingId) {
+    await db.update(targetsTable)
+      .set(payload)
+      .where(eq(targetsTable.id, editingId));
+  } else {
+    await db.insert(targetsTable).values({
+      ...payload,
+      createdAt: new Date().toISOString(),
+    });
+  }
+
+  setLabel('');
+  setTargetValue('');
+  setEditingId(null);
+  setShowForm(false);
+  setSelectedCategory(null);
+
+  load();
+}
 
   async function handleDelete(id: number) {
     Alert.alert('Delete target', 'Are you sure?', [
@@ -295,7 +312,7 @@ if (user) setUserName(user.name);
             <Text style={styles.inputLabel}>Label</Text>
             <TextInput
               style={styles.input}
-              placeholder="e.g. Run more"
+              placeholder="e.g. Visit museums"
               placeholderTextColor={colours.textMuted}
               value={label}
               onChangeText={setLabel}
@@ -340,6 +357,40 @@ if (user) setUserName(user.name);
                 </TouchableOpacity>
               ))}
             </View>
+
+            <Text style={styles.inputLabel}>Category </Text>
+
+<View style={styles.toggleRow}>
+  <TouchableOpacity
+    style={[styles.toggleBtn, selectedCategory === null && styles.toggleActive]}
+    onPress={() => setSelectedCategory(null)}
+  >
+    <Text style={[
+      styles.toggleText,
+      selectedCategory === null && styles.toggleTextActive
+    ]}>
+      All
+    </Text>
+  </TouchableOpacity>
+
+  {categories.map(cat => (
+    <TouchableOpacity
+      key={cat.id}
+      style={[
+        styles.toggleBtn,
+        selectedCategory === cat.id && styles.toggleActive
+      ]}
+      onPress={() => setSelectedCategory(cat.id)}
+    >
+      <Text style={[
+        styles.toggleText,
+        selectedCategory === cat.id && styles.toggleTextActive
+      ]}>
+        {cat.name}
+      </Text>
+    </TouchableOpacity>
+  ))}
+</View>
 
             <TouchableOpacity style={styles.saveBtn} onPress={handleSave}>
               <Text style={styles.saveBtnText}>{editingId ? 'Save Changes' : 'Add Target'}</Text>

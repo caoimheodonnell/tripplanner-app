@@ -9,6 +9,7 @@ export async function requestNotificationPermission(): Promise<boolean> {
 }
 
 export async function scheduleDailyReminder(): Promise<void> {
+
   await Notifications.cancelAllScheduledNotificationsAsync();
 
   await Notifications.scheduleNotificationAsync({
@@ -17,13 +18,16 @@ export async function scheduleDailyReminder(): Promise<void> {
       body: "Don't forget to log today's activities!",
     },
     trigger: {
-      type: Notifications.SchedulableTriggerInputTypes.DAILY,
-      hour: 20,
-      minute: 0,
-    },
+  type: Notifications.SchedulableTriggerInputTypes.TIME_INTERVAL,
+  seconds: 10,
+  repeats: false,
+}
   });
 }
 
+
 export async function cancelAllReminders(): Promise<void> {
   await Notifications.cancelAllScheduledNotificationsAsync();
+
+
 }

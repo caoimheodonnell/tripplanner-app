@@ -5,8 +5,9 @@ import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { eq } from 'drizzle-orm';
 import * as FileSystem from 'expo-file-system/legacy';
+import { useFocusEffect } from 'expo-router';
 import * as Sharing from 'expo-sharing';
-import { useEffect, useState } from 'react';
+import { useCallback, useState } from 'react';
 import {
   Alert,
   SafeAreaView,
@@ -173,29 +174,37 @@ export default function InsightsScreen() {
   setPieData(slices);
 
   //Streak calculation
-  const uniqueDates = [...new Set(acts.map(a => a.date))].sort().reverse();
+  const uniqueDates = [...new Set(acts.map(a => a.date))]
+  .sort((a, b) => new Date(b).getTime() - new Date(a).getTime());
 
-  let streakCount = 0;
   const today = new Date();
+const todayStr = today.toLocaleDateString('en-CA');
 
-  for (let i = 0; i < uniqueDates.length; i++) {
-    const expected = new Date(today);
-    expected.setDate(today.getDate() - i);
-    const expectedStr = expected.toISOString().split('T')[0];
+const startIndex = uniqueDates.includes(todayStr) ? 0 : 1;
 
-    if (uniqueDates[i] === expectedStr) {
-      streakCount++;
-    } else {
-      break;
-    }
+let streakCount = 0;
+
+for (let i = startIndex; i < uniqueDates.length + startIndex; i++) {
+  const expected = new Date(today);
+  expected.setDate(today.getDate() - i);
+
+  const expectedStr = expected.toLocaleDateString('en-CA');
+
+  if (uniqueDates.includes(expectedStr)) {
+    streakCount++;
+  } else {
+    break;
   }
+}
 
   setStreak(streakCount);
 }
 
-useEffect(() => {
-  load();
-}, []);
+useFocusEffect(
+  useCallback(() => {
+    load();
+  }, [])
+);
 
 async function handleExport() {
   const userId = await AsyncStorage.getItem('userId');

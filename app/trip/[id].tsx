@@ -31,6 +31,7 @@ export default function TripDetailScreen() {
 
   const [trip, setTrip] = useState<Trip | null>(null);
   const [activities, setActivities] = useState<Activity[]>([]);
+  const [categories, setCategories] = useState<any[]>([]);
   const [selectedCategory, setSelectedCategory] = useState<number | null>(null);
   const [dateFrom, setDateFrom] = useState('');
   const [dateTo, setDateTo] = useState('');
@@ -210,6 +211,11 @@ pillTextSelected: {
     const userId = await AsyncStorage.getItem('userId');
     if (!userId) return;
 
+  const cats = await db.select().from(categoriesTable);
+  setCategories(cats);
+
+    
+
     const [tripRow] = await db
       .select()
       .from(tripsTable)
@@ -294,9 +300,7 @@ pillTextSelected: {
     .filter(a => dateFrom ? a.date >= dateFrom : true)
     .filter(a => dateTo ? a.date <= dateTo : true);
 
-  const uniqueCategories = activities.filter(
-    (a, i, arr) => arr.findIndex(b => b.categoryId === a.categoryId) === i
-  );
+  const uniqueCategories = categories;
 
   if (!trip) {
     return (
@@ -352,7 +356,14 @@ pillTextSelected: {
 
 {/* Weather */}
 <View style={styles.weatherCard}>
-  <Text style={styles.weatherTitle}>🌤 Current Weather</Text>
+  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+  <Ionicons
+    name="partly-sunny-outline"
+    size={22}
+    color={colours.primary}
+  />
+  <Text style={styles.weatherTitle}>Current Weather</Text>
+</View>
 
   {weatherLoading && (
     <Text style={styles.weatherMuted}>Loading weather...</Text>
@@ -419,25 +430,28 @@ pillTextSelected: {
 </Text>
         </TouchableOpacity>
 
-        {uniqueCategories.map(a => (
-          <TouchableOpacity
-            key={a.categoryId}
-            onPress={() => setSelectedCategory(a.categoryId)}
-            style={[
-              styles.pill,
-              selectedCategory === a.categoryId && styles.pillSelected,
-            ]}
-          >
-            <Text
-            style={[
-              styles.pillText,
-              selectedCategory === a.categoryId && styles.pillTextSelected
-            ]}
-            >
-            {a.categoryName}
-          </Text>
-          </TouchableOpacity>
-        ))}
+        {uniqueCategories.map(cat => (
+  <TouchableOpacity
+    key={cat.id}
+    onPress={() => setSelectedCategory(cat.id)}
+    style={[
+      styles.pill,
+      selectedCategory === cat.id && {
+        backgroundColor: cat.colour,
+        borderColor: cat.colour,
+      },
+    ]}
+  >
+    <Text
+      style={[
+        styles.pillText,
+        selectedCategory === cat.id && styles.pillTextSelected,
+      ]}
+    >
+      {cat.name}
+    </Text>
+  </TouchableOpacity>
+))}
       </View>
 
       
