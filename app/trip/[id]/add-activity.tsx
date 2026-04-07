@@ -1,8 +1,9 @@
 import { useTheme } from '@/context/ThemeContext';
 import { db } from '@/db/client';
-import { activitiesTable, categoriesTable } from '@/db/schema';
+import { activitiesTable, categoriesTable, usersTable } from '@/db/schema';
 import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { eq } from 'drizzle-orm';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
 import {
@@ -75,19 +76,35 @@ categoryText: {
     load();
   }, []);
 
-  async function handleSave() {
+ // save activity
+async function handleSave() {
   if (!name.trim() || !date || !selectedCat) {
     Alert.alert('Missing fields', 'Please fill in name, date and category.');
     return;
   }
 
-  const stored = await AsyncStorage.getItem('userId');
-  const userId = stored ? Number(stored) : null;
-  if (!userId) { Alert.alert('Error', 'Not logged in.'); return; }
+  // get user from token
+  const token = await AsyncStorage.getItem('sessionToken');
+  if (!token) {
+    Alert.alert('Error', 'Not logged in.');
+    return;
+  }
+
+  const [user] = await db
+    .select()
+    .from(usersTable)
+    .where(eq(usersTable.sessionToken, token));
+
+  const userId = user?.id;
+
+  if (!userId) {
+    Alert.alert('Error', 'User not found.');
+    return;
+  }
 
   await db.insert(activitiesTable).values({
     tripId: Number(id),
-    userId,                                        // ← add this
+    userId, // correct now
     categoryId: selectedCat,
     name: name.trim(),
     date,
@@ -95,7 +112,8 @@ categoryText: {
     notes: notes.trim() || null,
     createdAt: new Date().toISOString(),
   });
-  router.back();
+
+  router.back(); // go back
 }
 
   const canSave = name.trim() && date && selectedCat;

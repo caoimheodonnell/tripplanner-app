@@ -1,6 +1,6 @@
 import { useTheme } from '@/context/ThemeContext';
 import { db } from '@/db/client';
-import { activitiesTable, categoriesTable, tripsTable } from '@/db/schema';
+import { activitiesTable, categoriesTable, tripsTable, usersTable } from '@/db/schema';
 import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { eq } from 'drizzle-orm';
@@ -17,7 +17,7 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import { PieChart } from 'react-native-gifted-charts';
+import { BarChart, PieChart } from 'react-native-gifted-charts';
 
 type Slice = { value: number; color: string; text: string; label: string };
 
@@ -28,6 +28,7 @@ export default function InsightsScreen() {
   const [pieData, setPieData]           = useState<Slice[]>([]);
   const [streak, setStreak] = useState(0);
   const { colours } = useTheme();
+  const [barData, setBarData] = useState<any[]>([]);
 
   
   const styles = StyleSheet.create({
@@ -123,8 +124,12 @@ export default function InsightsScreen() {
       color: colours.textPrimary,
     },
   });
+  
   async function load() {
-  const userId = await AsyncStorage.getItem('userId');
+  const token = await AsyncStorage.getItem('sessionToken');
+  if (!token) return;
+  const [user] = await db.select().from(usersTable).where(eq(usersTable.sessionToken, token));
+  const userId = user?.id;
 
   if (!userId) {
     setTripCount(0);
@@ -135,32 +140,40 @@ export default function InsightsScreen() {
     return;
   }
 
- 
-  const trips = await db
-    .select()
-    .from(tripsTable)
-    .where(eq(tripsTable.userId, Number(userId)));
+  const trips = await db.select().from(tripsTable).where(eq(tripsTable.userId, userId));
+  const acts  = await db.select().from(activitiesTable).where(eq(activitiesTable.userId, userId));
+  const cats  = await db.select().from(categoriesTable);
 
-  const acts = await db
-    .select()
-    .from(activitiesTable)
-    .where(eq(activitiesTable.userId, Number(userId)));
+  // Bar chart — last 7 days
+  const last7Days: Record<string, number> = {};
+  for (let i = 0; i < 7; i++) {
+    const d = new Date();
+    d.setDate(d.getDate() - i);
+    last7Days[d.toLocaleDateString('en-CA')] = 0;
+  }
+  for (const a of acts) {
+  const d = new Date(a.date).toLocaleDateString('en-CA'); 
 
-  const cats = await db.select().from(categoriesTable);
+  if (last7Days[d] !== undefined) {
+    last7Days[d]++;
+  }
+}
+  const bars = Object.entries(last7Days).reverse().map(([date, count]) => ({
+    value: count,
+    label: new Date(date).toLocaleDateString('en-GB', { weekday: 'short' }),
+  }));
+  setBarData(bars);
 
-  
   setTripCount(trips.length);
   setActivityCount(acts.length);
-
   const mins = acts.reduce((sum, a) => sum + (a.durationMinutes ?? 0), 0);
   setTotalHours(Math.round((mins / 60) * 10) / 10);
 
-  
+  // Pie chart
   const grouped: Record<number, number> = {};
   for (const a of acts) {
     grouped[a.categoryId] = (grouped[a.categoryId] ?? 0) + 1;
   }
-
   const slices: Slice[] = Object.entries(grouped).map(([catId, count]) => {
     const cat = cats.find(c => c.id === Number(catId));
     return {
@@ -170,33 +183,24 @@ export default function InsightsScreen() {
       label: cat?.name ?? 'Unknown',
     };
   });
-
   setPieData(slices);
 
-  //Streak calculation
+  // Streak
   const uniqueDates = [...new Set(acts.map(a => a.date))]
-  .sort((a, b) => new Date(b).getTime() - new Date(a).getTime());
-
+    .sort((a, b) => new Date(b).getTime() - new Date(a).getTime());
   const today = new Date();
-const todayStr = today.toLocaleDateString('en-CA');
-
-const startIndex = uniqueDates.includes(todayStr) ? 0 : 1;
-
-let streakCount = 0;
-
-for (let i = startIndex; i < uniqueDates.length + startIndex; i++) {
-  const expected = new Date(today);
-  expected.setDate(today.getDate() - i);
-
-  const expectedStr = expected.toLocaleDateString('en-CA');
-
-  if (uniqueDates.includes(expectedStr)) {
-    streakCount++;
-  } else {
-    break;
+  const todayStr = today.toLocaleDateString('en-CA');
+  const startIndex = uniqueDates.includes(todayStr) ? 0 : 1;
+  let streakCount = 0;
+  for (let i = startIndex; i < uniqueDates.length + startIndex; i++) {
+    const expected = new Date(today);
+    expected.setDate(today.getDate() - i);
+    if (uniqueDates.includes(expected.toLocaleDateString('en-CA'))) {
+      streakCount++;
+    } else {
+      break;
+    }
   }
-}
-
   setStreak(streakCount);
 }
 
@@ -207,12 +211,10 @@ useFocusEffect(
 );
 
 async function handleExport() {
-  const userId = await AsyncStorage.getItem('userId');
-
-  if (!userId) {
-    Alert.alert('Error', 'User not logged in');
-    return;
-  }
+  const token = await AsyncStorage.getItem('sessionToken');
+  if (!token) { Alert.alert('Error', 'Not logged in'); return; }
+  const [user] = await db.select().from(usersTable).where(eq(usersTable.sessionToken, token));
+  if (!user) { Alert.alert('Error', 'User not found'); return; }
 
   const acts = await db
     .select({
@@ -224,28 +226,19 @@ async function handleExport() {
     })
     .from(activitiesTable)
     .leftJoin(categoriesTable, eq(activitiesTable.categoryId, categoriesTable.id))
-    .where(eq(activitiesTable.userId, Number(userId)));
+    .where(eq(activitiesTable.userId, user.id));
 
   const header = 'Name,Date,Duration (mins),Category,Notes\n';
-
   const rows = acts.map(a =>
     `"${a.name}","${a.date}","${a.durationMinutes ?? ''}","${a.categoryName ?? ''}","${a.notes ?? ''}"`
   ).join('\n');
 
-  
-const path = (FileSystem as any).documentDirectory + 'tripplanner-export.csv';
-
-  await FileSystem.writeAsStringAsync(path, header + rows, {
-    encoding: 'utf8',
-  });
+  const path = (FileSystem as any).documentDirectory + 'tripplanner-export.csv';
+  await FileSystem.writeAsStringAsync(path, header + rows, { encoding: 'utf8' });
 
   const canShare = await Sharing.isAvailableAsync();
-
   if (canShare) {
-    await Sharing.shareAsync(path, {
-      mimeType: 'text/csv',
-      dialogTitle: 'Export your activities',
-    });
+    await Sharing.shareAsync(path, { mimeType: 'text/csv', dialogTitle: 'Export your activities' });
   } else {
     Alert.alert('Exported', 'File saved to: ' + path);
   }
@@ -256,7 +249,7 @@ const path = (FileSystem as any).documentDirectory + 'tripplanner-export.csv';
         <Text style={styles.title}>Insights</Text>
         <Text style={styles.subtitle}>Your travel journey so far...</Text>
 
-        {/* Stat cards */}
+        
         <View style={styles.statsRow}>
           <View style={[styles.statCard, { flex: 1 }]}>
             <Text style={styles.statLabel}>Trips</Text>
@@ -280,50 +273,105 @@ const path = (FileSystem as any).documentDirectory + 'tripplanner-export.csv';
   <View>
     <Text style={styles.streakNum}>{streak} day{streak !== 1 ? 's' : ''}</Text>
     <Text style={styles.streakLabel}>
-      {streak > 0 ? 'Current activity streak!' : 'Log an activity to start your streak'}
+      {streak > 0 ? 'Current activity streak!' : 'You are one activity away from starting a streak!'}
     </Text>
   </View>
 </View>
 
-        {/* Pie chart */}
-        <View style={styles.card}>
-          <Text style={styles.cardLabel}>Activities by Category</Text>
-          {pieData.length === 0 ? (
-            <Text style={styles.cardMuted}>No activities logged yet</Text>
-          ) : (
-            <>
-              <View style={styles.chartWrap}>
-                <PieChart
-                  data={pieData}
-                  donut
-                  radius={90}
-                  innerRadius={55}
-                  centerLabelComponent={() => (
-                    <View style={styles.centerLabel}>
-                      <Text style={styles.centerNum}>{activityCount}</Text>
-                      <Text style={styles.centerSub}>total</Text>
-                    </View>
-                  )}
-                />
-              </View>
+        
+<View style={styles.card}>
+  <Text style={styles.cardLabel}>Activities by Category</Text>
 
-              
-              <View style={styles.legend}>
-                {pieData.map((s, i) => (
-                  <View key={i} style={styles.legendRow}>
-                    <View style={[styles.legendDot, { backgroundColor: s.color }]} />
-                    <Text style={styles.legendLabel}>{s.label}</Text>
-                    <Text style={styles.legendValue}>{s.value}</Text>
-                  </View>
-                ))}
-              </View>
-            </>
+  {pieData.length === 0 ? (
+    <Text style={[styles.cardMuted, { textAlign: 'center', marginTop: 10 }]}>
+      No activities logged yet
+    </Text>
+  ) : (
+    <>
+      <View style={styles.chartWrap}>
+        <PieChart
+          data={pieData}
+          donut
+          radius={90}
+          innerRadius={55}
+          centerLabelComponent={() => (
+            <View style={styles.centerLabel}>
+              <Text style={styles.centerNum}>{activityCount}</Text>
+              <Text style={styles.centerSub}>total</Text>
+            </View>
           )}
-          <TouchableOpacity style={styles.exportBtn} onPress={handleExport}
-  accessibilityRole="button" accessibilityLabel="Export activities to CSV">
-  <Text style={styles.exportBtnText}>  Export Activities as CSV</Text>
-</TouchableOpacity> 
-        </View>
+        />
+      </View>
+
+      <View style={styles.legend}>
+        {pieData.map((s, i) => (
+          <View key={i} style={styles.legendRow}>
+            <View style={[styles.legendDot, { backgroundColor: s.color }]} />
+            <Text style={styles.legendLabel}>{s.label}</Text>
+            <Text style={styles.legendValue}>{s.value}</Text>
+          </View>
+        ))}
+      </View>
+    </>
+  )}
+
+  <TouchableOpacity
+    style={styles.exportBtn}
+    onPress={handleExport}
+    accessibilityRole="button"
+    accessibilityLabel="Export activities to CSV"
+  >
+    <Text style={styles.exportBtnText}>Export Activities as CSV</Text>
+  </TouchableOpacity>
+</View>
+
+
+<View style={styles.card}>
+  <Text style={styles.cardLabel}>Activities (Last 7 Days)</Text>
+
+  {barData.length === 0 ? (
+    <Text style={[styles.cardMuted, { textAlign: 'center', marginTop: 10 }]}>
+      No activity in the last 7 days
+    </Text>
+  ) : (
+    <View style={{ alignItems: 'center', paddingVertical: 10 }}>
+      <BarChart
+        data={barData}
+        barWidth={16}
+        spacing={20}
+        roundedTop
+        hideRules
+        xAxisThickness={0}
+        yAxisThickness={0}
+        noOfSections={2}
+        maxValue={Math.max(...barData.map(b => b.value), 1)}
+        frontColor={colours.primary}
+        yAxisTextStyle={{
+          color: colours.textMuted,
+          fontSize: 10,
+        }}
+        xAxisLabelTextStyle={{
+          color: colours.textMuted,
+          fontSize: 11,
+        }}
+        isAnimated
+        animationDuration={600}
+      />
+    </View>
+  )}
+
+  <Text
+    style={{
+      textAlign: 'center',
+      fontSize: 12,
+      color: colours.textMuted,
+      marginTop: 6,
+    }}
+  >
+    Activity over the last 7 days
+  </Text>
+</View>
+        
       </ScrollView>
     </SafeAreaView>
   );

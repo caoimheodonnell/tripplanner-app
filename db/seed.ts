@@ -9,6 +9,8 @@ import {
 } from './schema';
 
 export async function seedIfEmpty() {
+ 
+ 
   
 const existingCats = await db.select().from(categoriesTable);
 if (existingCats.length > 0) return;
@@ -29,6 +31,7 @@ if (existingCats.length > 0) return;
       name TEXT NOT NULL,
       email TEXT NOT NULL,
       password TEXT NOT NULL,
+      session_token TEXT,
       created_at TEXT NOT NULL
     );
   `);

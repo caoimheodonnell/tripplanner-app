@@ -1,7 +1,8 @@
 import { useTheme } from '@/context/ThemeContext';
 import { db } from '@/db/client';
-import { tripsTable } from '@/db/schema';
+import { tripsTable, usersTable } from '@/db/schema';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { eq } from 'drizzle-orm';
 import { useRouter } from 'expo-router';
 import { useState } from 'react';
 import {
@@ -73,9 +74,12 @@ export default function AddTripScreen() {
       return;
     }
 
-    const userId = await AsyncStorage.getItem('userId');
+    const token = await AsyncStorage.getItem('sessionToken');
+if (!token) return;
+const [authedUser] = await db.select().from(usersTable).where(eq(usersTable.sessionToken, token));
+const userId = authedUser?.id;
 
-    if (!userId) {
+if (!userId) {
       Alert.alert('Error', 'User not logged in');
       return;
     }

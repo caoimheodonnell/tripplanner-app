@@ -57,18 +57,48 @@ export default function ProfileScreen() {
     saveBtnText: { color: '#fff', fontWeight: '700', fontSize: 15 },
 
     card:     { backgroundColor: colours.surface, borderRadius: 14, padding: 20, borderWidth: 1, borderColor: colours.border, gap: 10 },
-    cardMuted:{ fontSize: 14, color: colours.textMuted, fontStyle: 'italic' },
+    cardMuted:{ fontSize: 14, color: colours.textSecondary, opacity: 0.8 },
 
-    targetCard:   { backgroundColor: colours.surface, borderRadius: 14, padding: 16, borderWidth: 1, borderColor: colours.border, gap: 8 },
-    targetLabel:  { fontSize: 15, fontWeight: '700', color: colours.textPrimary, flex: 1 },
-    targetProgress:{ fontSize: 22, fontWeight: '800', color: colours.textPrimary },
-    progressTrack: { height: 8, backgroundColor: colours.border, borderRadius: 4, overflow: 'hidden' },
-    progressFill:  { height: 8, borderRadius: 4 },
-    targetHint:   { fontSize: 11, color: colours.textMuted },
+    targetCard: {
+  backgroundColor: colours.surface,
+  borderRadius: 14,
+  padding: 16,
+  borderWidth: 1,
+  borderColor: colours.border,
+  borderLeftWidth: 4,
+  borderLeftColor: colours.primary,
+  gap: 8
+},
+    targetLabel:  { fontSize: 15,
+       fontWeight: '700', 
+       color: colours.textPrimary, 
+       flex: 1 },
+    targetProgress:{ fontSize: 22, 
+      fontWeight: '800', 
+      color: colours.textPrimary },
+    progressTrack: { height: 8, 
+      backgroundColor: colours.border,
+      borderRadius: 4, overflow: 'hidden' },
+    progressFill:  { height: 8, 
+      borderRadius: 4 },
+    targetHint: {
+  fontSize: 12,
+  color: colours.textSecondary,
+  opacity: 0.9,
+},
 
-    notifRow:       { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+    notifRow:       { flexDirection: 'row', 
+      alignItems: 'center', 
+      justifyContent: 'space-between' },
+
     notifTitle:     { fontSize: 15, fontWeight: '600', color: colours.textPrimary },
-    notifSub:       { fontSize: 12, color: colours.textMuted, marginTop: 2 },
+    
+    notifSub: {
+  fontSize: 12,
+  color: colours.textSecondary,
+  opacity: 0.7,
+  marginTop: 2,
+},
 
     logoutText: { fontSize: 16, fontWeight: '600', color: colours.primary },
     deleteText: { fontSize: 16, fontWeight: '600', color: colours.error },
@@ -97,19 +127,16 @@ greetingName: {
   
 
   async function load() {
-    const userId = await AsyncStorage.getItem('userId');
-    if (!userId) return;
+  const token = await AsyncStorage.getItem('sessionToken');
+  if (!token) return;
+  const [user] = await db.select().from(usersTable).where(eq(usersTable.sessionToken, token));
+const userId = user?.id;
+if (!userId) return;
 
+if (user) setUserName(user.name);   // user is already fetched above — no second query needed
 
 const cats = await db.select().from(categoriesTable);
 setCategories(cats);
-     
-const [user] = await db
-  .select()
-  .from(usersTable)
-  .where(eq(usersTable.id, Number(userId)));
-
-if (user) setUserName(user.name);
 
     const rows = await db
       .select()
@@ -137,8 +164,11 @@ if (user) setUserName(user.name);
       }
 
       const today = now.toISOString().split('T')[0];
-      const userId = await AsyncStorage.getItem('userId');
-      if (!userId) return;
+      const token = await AsyncStorage.getItem('sessionToken');
+if (!token) return;
+const [user] = await db.select().from(usersTable).where(eq(usersTable.sessionToken, token));
+const userId = user?.id;
+if (!userId) return;
 
       const acts = await db
         .select()
@@ -176,8 +206,11 @@ if (user) setUserName(user.name);
     return;
   }
 
-  const userId = await AsyncStorage.getItem('userId');
-  if (!userId) return;
+  const token = await AsyncStorage.getItem('sessionToken');
+if (!token) return;
+const [user] = await db.select().from(usersTable).where(eq(usersTable.sessionToken, token));
+const userId = user?.id;
+if (!userId) return;
 
   const payload = {
     label: label.trim(),
@@ -230,27 +263,48 @@ if (user) setUserName(user.name);
     setShowForm(true);
   }
 
-  async function handleLogout() {
-    await AsyncStorage.removeItem('userId');
-    router.replace('/login' as any);
+  // logout
+async function handleLogout() {
+  const token = await AsyncStorage.getItem('sessionToken');
+  if (token) {
+    const [user] = await db.select().from(usersTable).where(eq(usersTable.sessionToken, token));
+    if (user) {
+      await db.update(usersTable)
+        .set({ sessionToken: null })
+        .where(eq(usersTable.id, user.id));
+    }
   }
+  await AsyncStorage.removeItem('sessionToken');
+  router.replace('/login' as any);
+}
 
-  async function handleDeleteAccount() {
-    Alert.alert('Delete account', 'This will permanently delete your account.', [
-      { text: 'Cancel', style: 'cancel' },
-      {
-        text: 'Delete', style: 'destructive',
-        onPress: async () => {
-          const userId = await AsyncStorage.getItem('userId');
-          if (userId) {
-            await db.delete(usersTable).where(eq(usersTable.id, Number(userId)));
+
+// delete account
+async function handleDeleteAccount() {
+  Alert.alert('Delete account', 'This will permanently delete your account.', [
+    { text: 'Cancel', style: 'cancel' },
+    {
+      text: 'Delete', style: 'destructive',
+      onPress: async () => {
+        const token = await AsyncStorage.getItem('sessionToken');
+
+        if (token) {
+          const [user] = await db
+            .select()
+            .from(usersTable)
+            .where(eq(usersTable.sessionToken, token));
+
+          if (user) {
+            await db.delete(usersTable).where(eq(usersTable.id, user.id)); // delete user
           }
-          await AsyncStorage.removeItem('userId');
-          router.replace('/login' as any);
-        },
+        }
+
+        await AsyncStorage.removeItem('sessionToken'); // clear local
+        router.replace('/login' as any);
       },
-    ]);
-  }
+    },
+  ]);
+}
 
   async function toggleNotifications() {
     if (notificationsOn) {
@@ -313,7 +367,7 @@ if (user) setUserName(user.name);
             <TextInput
               style={styles.input}
               placeholder="e.g. Visit museums"
-              placeholderTextColor={colours.textMuted}
+              placeholderTextColor={colours.textSecondary}
               value={label}
               onChangeText={setLabel}
             />

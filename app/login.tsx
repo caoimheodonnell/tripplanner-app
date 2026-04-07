@@ -115,19 +115,29 @@ export default function LoginScreen() {
   });
 
   async function handleLogin() {
-    if (!email.trim() || !password.trim()) {
-      Alert.alert('Missing fields', 'Please enter your email and password.');
-      return;
-    }
-    const [user] = await db.select().from(usersTable)
-      .where(eq(usersTable.email, email.trim().toLowerCase()));
-    if (!user || user.password !== password) {
-      Alert.alert('Login failed', 'Email or password is incorrect.');
-      return;
-    }
-    await AsyncStorage.setItem('userId', user.id.toString());
-    router.replace('/(tabs)');
+  if (!email.trim() || !password.trim()) {
+    Alert.alert('Missing fields', 'Please enter your email and password.');
+    return;
   }
+  const [user] = await db.select().from(usersTable)
+    .where(eq(usersTable.email, email.trim().toLowerCase()));
+  if (!user || user.password !== password) {
+    Alert.alert('Login failed', 'Email or password is incorrect.');
+    return;
+  }
+
+  // Generate a random session token  never store userId or password directly
+  const token = Math.random().toString(36).slice(2) + Date.now().toString(36);
+
+  // Save token to DB so we can look up the user later
+  await db.update(usersTable)
+    .set({ sessionToken: token })
+    .where(eq(usersTable.id, user.id));
+
+  // Store ONLY the token in AsyncStorage (not userId, not password)
+  await AsyncStorage.setItem('sessionToken', token);
+  router.replace('/(tabs)');
+}
 
   async function handleRegister() {
     if (!name.trim() || !email.trim() || !password.trim()) {

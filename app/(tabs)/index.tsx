@@ -2,7 +2,7 @@ import EmptyState from '@/components/EmptyState';
 import TripCard from '@/components/TripCard';
 import { useTheme } from '@/context/ThemeContext';
 import { db } from '@/db/client';
-import { tripsTable } from '@/db/schema';
+import { tripsTable, usersTable } from '@/db/schema';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { and, desc, eq, like } from 'drizzle-orm';
 import { useFocusEffect, useRouter } from 'expo-router';
@@ -91,40 +91,49 @@ export default function TripsScreen() {
     },
   });
 
-  async function loadTrips(query = '') {
-    setLoading(true);
+// Put this OUTSIDE loadTrips, at the top of the component (after the useState lines)
+async function getLoggedInUserId(): Promise<number | null> {
+  const token = await AsyncStorage.getItem('sessionToken');
+  if (!token) return null;
+  const [user] = await db.select().from(usersTable)
+    .where(eq(usersTable.sessionToken, token));
+  return user?.id ?? null;
+}
 
-    const userId = await AsyncStorage.getItem('userId');
-    if (!userId) {
-      setTrips([]);
-      setLoading(false);
-      return;
-    }
+// Then your loadTrips becomes:
+async function loadTrips(query = '') {
+  setLoading(true);
 
-    let rows: Trip[];
-
-    if (query.trim()) {
-      rows = await db
-        .select()
-        .from(tripsTable)
-        .where(
-          and(
-            eq(tripsTable.userId, Number(userId)),
-            like(tripsTable.name, `%${query}%`)
-          )
-        )
-        .orderBy(desc(tripsTable.createdAt));
-    } else {
-      rows = await db
-        .select()
-        .from(tripsTable)
-        .where(eq(tripsTable.userId, Number(userId)))
-        .orderBy(desc(tripsTable.createdAt));
-    }
-
-    setTrips(rows);
-    setLoading(false);
+  const userId = await getLoggedInUserId();  // ← actually CALL it here
+  if (!userId) {
+    router.replace('/login');
+    return;
   }
+
+  let rows: Trip[];
+
+  if (query.trim()) {
+    rows = await db
+      .select()
+      .from(tripsTable)
+      .where(
+        and(
+          eq(tripsTable.userId, userId),      // ← no Number() needed, already a number
+          like(tripsTable.name, `%${query}%`)
+        )
+      )
+      .orderBy(desc(tripsTable.createdAt));
+  } else {
+    rows = await db
+      .select()
+      .from(tripsTable)
+      .where(eq(tripsTable.userId, userId))
+      .orderBy(desc(tripsTable.createdAt));
+  }
+
+  setTrips(rows);
+  setLoading(false);
+}
 
   useFocusEffect(
     useCallback(() => {

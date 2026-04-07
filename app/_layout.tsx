@@ -63,8 +63,8 @@ function AppContent() {
   useEffect(() => {
     async function init() {
       await seedIfEmpty();
-      const userId = await AsyncStorage.getItem('userId');
-      setLoggedIn(!!userId);
+      const token = await AsyncStorage.getItem('sessionToken');
+setLoggedIn(!!token);
       setReady(true);
     }
     init();

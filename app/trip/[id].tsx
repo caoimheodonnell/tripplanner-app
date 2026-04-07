@@ -1,7 +1,7 @@
 import EmptyState from '@/components/EmptyState';
 import { useTheme } from '@/context/ThemeContext';
 import { db } from '@/db/client';
-import { activitiesTable, categoriesTable, tripsTable } from '@/db/schema';
+import { activitiesTable, categoriesTable, tripsTable, usersTable } from '@/db/schema';
 import { fetchWeather, WeatherData } from '@/utils/weather';
 import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -208,8 +208,11 @@ pillTextSelected: {
   });
 
   async function load() {
-    const userId = await AsyncStorage.getItem('userId');
-    if (!userId) return;
+  const token = await AsyncStorage.getItem('sessionToken');
+  if (!token) return;
+  const [authedUser] = await db.select().from(usersTable).where(eq(usersTable.sessionToken, token));
+  const userId = authedUser?.id;
+  if (!userId) return;
 
   const cats = await db.select().from(categoriesTable);
   setCategories(cats);
