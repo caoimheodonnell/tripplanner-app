@@ -484,7 +484,10 @@ async function handleDeleteAccount() {
                   { width: `${pct}%`, backgroundColor: met ? colours.success : colours.primary },
                 ]} />
               </View>
-              <Text style={styles.targetHint}>Long press to delete · tap to edit</Text>
+              <Text style={[styles.targetHint, { color: met ? colours.success : colours.textSecondary }]}>
+                {met ? '✓ Target met!' : `${(t.targetValue - current).toFixed(1)} ${t.unit} remaining`}
+              </Text>
+              <Text style={styles.targetHint}>Long press to delete - tap to edit</Text>
             </TouchableOpacity>
           );
         })}

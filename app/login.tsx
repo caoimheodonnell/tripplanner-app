@@ -1,17 +1,16 @@
 import { useTheme } from '@/context/ThemeContext';
 import { db } from '@/db/client';
 import { usersTable } from '@/db/schema';
-import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { eq } from 'drizzle-orm';
+import * as Crypto from 'expo-crypto';
 import { useRouter } from 'expo-router';
 import { useState } from 'react';
 import {
-  Alert,
-  SafeAreaView, ScrollView,
+  Alert, Image, SafeAreaView, ScrollView,
   StyleSheet,
   Text, TextInput, TouchableOpacity,
-  View,
+  View
 } from 'react-native';
 
 export default function LoginScreen() {
@@ -121,7 +120,13 @@ export default function LoginScreen() {
   }
   const [user] = await db.select().from(usersTable)
     .where(eq(usersTable.email, email.trim().toLowerCase()));
-  if (!user || user.password !== password) {
+  // hash entered password to compare
+const hashedPassword = await Crypto.digestStringAsync(
+  Crypto.CryptoDigestAlgorithm.SHA256,
+  password
+);
+
+if (!user || user.password !== hashedPassword) {
     Alert.alert('Login failed', 'Email or password is incorrect.');
     return;
   }
@@ -150,12 +155,19 @@ export default function LoginScreen() {
       Alert.alert('Already registered', 'An account with that email already exists.');
       return;
     }
-    await db.insert(usersTable).values({
-      name: name.trim(),
-      email: email.trim().toLowerCase(),
-      password,
-      createdAt: new Date().toISOString(),
-    });
+    
+
+const hashedPassword = await Crypto.digestStringAsync(
+  Crypto.CryptoDigestAlgorithm.SHA256,
+  password
+);
+
+await db.insert(usersTable).values({
+  name: name.trim(),
+  email: email.trim().toLowerCase(),
+  password: hashedPassword,
+  createdAt: new Date().toISOString(),
+});
     Alert.alert('Account created!', 'You can now log in.');
     setMode('login');
   }
@@ -163,10 +175,19 @@ export default function LoginScreen() {
   return (
     <SafeAreaView style={styles.safe}>
       <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
-        <View style={{ flexDirection: 'row', justifyContent: 'center', alignItems: 'center', gap: 6 }}>
-  <Ionicons name="airplane-outline" size={28} color={colours.textPrimary} />
-  <Text style={styles.logo}>TripPlanner</Text>
-</View>
+        {/* app logo */}
+<Image
+  source={require('../assets/images/Trip Planner.png')}
+  style={{
+    width: 100,
+    height: 100,
+    alignSelf: 'center',
+    marginBottom: 10,
+  }}
+  resizeMode="contain"
+/>
+
+<Text style={styles.logo}>Trip Planner</Text>
         <Text style={styles.tagline}>Plan your adventures</Text>
 
         <View style={styles.toggleRow}>

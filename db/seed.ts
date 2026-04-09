@@ -10,7 +10,6 @@ import {
 
 export async function seedIfEmpty() {
  
- 
   
 const existingCats = await db.select().from(categoriesTable);
 if (existingCats.length > 0) return;

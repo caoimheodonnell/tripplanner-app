@@ -8,12 +8,11 @@ import { and, desc, eq, like } from 'drizzle-orm';
 import { useFocusEffect, useRouter } from 'expo-router';
 import { useCallback, useState } from 'react';
 import {
-  FlatList,
-  StyleSheet,
+  FlatList, Image, StyleSheet,
   Text,
   TextInput,
   TouchableOpacity,
-  View,
+  View
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
@@ -91,7 +90,7 @@ export default function TripsScreen() {
     },
   });
 
-// Put this OUTSIDE loadTrips, at the top of the component (after the useState lines)
+
 async function getLoggedInUserId(): Promise<number | null> {
   const token = await AsyncStorage.getItem('sessionToken');
   if (!token) return null;
@@ -100,7 +99,7 @@ async function getLoggedInUserId(): Promise<number | null> {
   return user?.id ?? null;
 }
 
-// Then your loadTrips becomes:
+
 async function loadTrips(query = '') {
   setLoading(true);
 
@@ -155,9 +154,18 @@ async function loadTrips(query = '') {
     <SafeAreaView style={styles.safe} edges={['top']}>
       {/* Header */}
       <View style={styles.header}>
-        <Text style={styles.title}>
-  {'Your Trips'}
-</Text>
+  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+    
+    <Image
+      source={require('../../assets/images/Trip Planner.png')}
+      style={{ width: 60, height: 60 }}
+    />
+
+    <Text style={styles.title}>
+      Your Trips
+    </Text>
+
+  </View>
         <TouchableOpacity
           style={styles.addButton}
           onPress={() => router.push('/add-trip')}

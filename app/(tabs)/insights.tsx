@@ -295,11 +295,11 @@ async function handleExport() {
           radius={90}
           innerRadius={55}
           centerLabelComponent={() => (
-            <View style={styles.centerLabel}>
-              <Text style={styles.centerNum}>{activityCount}</Text>
-              <Text style={styles.centerSub}>total</Text>
-            </View>
-          )}
+        <View style={[styles.centerLabel, { backgroundColor: colours.surface, borderRadius: 55, padding: 10 }]}>
+          <Text style={[styles.centerNum, { color: colours.textPrimary }]}>{activityCount}</Text>
+          <Text style={[styles.centerSub, { color: colours.textSecondary }]}>total</Text>
+        </View>
+      )}
         />
       </View>
 
