@@ -10,7 +10,7 @@ import {
 
 export async function seedIfEmpty() {
  
-  
+// check if categories already exist
 const existingCats = await db.select().from(categoriesTable);
 if (existingCats.length > 0) return;
 
@@ -77,7 +77,7 @@ if (existingCats.length > 0) return;
     );
   `);
 
-  
+  // add default categories
   const categories = await db
     .insert(categoriesTable)
     .values([
@@ -87,7 +87,7 @@ if (existingCats.length > 0) return;
     ])
     .returning();
 
- 
+ // create test user
   await db.insert(usersTable).values({
     name: 'Test User',
     email: 'test@test.com',
@@ -97,7 +97,7 @@ if (existingCats.length > 0) return;
 
   const [user] = await db.select().from(usersTable);
 
- 
+ // create sample trip
   await db.insert(tripsTable).values({
     name: 'Paris Trip',
     userId: user.id,
@@ -110,7 +110,7 @@ if (existingCats.length > 0) return;
 
   const [trip] = await db.select().from(tripsTable);
 
-  
+  // add example activities
   await db.insert(activitiesTable).values([
     {
       tripId: trip.id,

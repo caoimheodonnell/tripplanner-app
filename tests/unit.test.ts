@@ -1,4 +1,4 @@
-// tests/unit.test.ts
+// mock database
 jest.mock('@/db/client', () => ({
   db: {
     select: jest.fn(),
@@ -7,6 +7,7 @@ jest.mock('@/db/client', () => ({
   },
 }));
 
+// mock table names
 jest.mock('@/db/schema', () => ({
   usersTable:      'usersTable',
   categoriesTable: 'categoriesTable',
@@ -18,19 +19,23 @@ jest.mock('@/db/schema', () => ({
 import { db } from '@/db/client';
 import { seedIfEmpty } from '@/db/seed';
 
+// fake trip data
 const MOCK_TRIPS = [
   { id: 1, name: 'Paris Trip', destination: 'Paris', startDate: '2026-06-12', endDate: '2026-06-18', coverColour: '#4A90D9', notes: '', createdAt: '2026-01-01T00:00:00.000Z' },
 ];
 
+// set up fake DB behaviour
 function setupMockDb() {
   let selectCallCount = 0;
 
   (db.select as jest.Mock).mockImplementation(() => ({
     from: jest.fn().mockImplementation(() => {
       selectCallCount++;
-      if (selectCallCount === 1) return Promise.resolve([]);          // trips check → empty, proceed
-      if (selectCallCount === 2) return Promise.resolve([{ id: 1 }]); // fetch user after insert
-      if (selectCallCount === 3) return Promise.resolve([{ id: 1 }]); // fetch trip after insert
+      // first call so no data
+      if (selectCallCount === 1) return Promise.resolve([]); 
+      // next calls so return fake data        
+      if (selectCallCount === 2) return Promise.resolve([{ id: 1 }]); 
+      if (selectCallCount === 3) return Promise.resolve([{ id: 1 }]); 
       return Promise.resolve([{ id: 1 }]);
     }),
   }));
@@ -45,6 +50,7 @@ function setupMockDb() {
 describe('seedIfEmpty – unit tests', () => {
 
   beforeEach(() => {
+     // reset mocks before each test
     jest.clearAllMocks();
     setupMockDb();
   });

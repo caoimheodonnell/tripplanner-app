@@ -10,6 +10,7 @@ type ThemeContextType = {
   toggleTheme: () => void;
 };
 
+// theme context - light or dark mode
 const ThemeContext = createContext<ThemeContextType>({
   isDark: false,
   colours: lightColours,
@@ -20,18 +21,21 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
   const [isDark, setIsDark] = useState(false);
 
   useEffect(() => {
+    // load saved theme from storage
     AsyncStorage.getItem('darkMode').then(val => {
       if (val === 'true') setIsDark(true);
     });
   }, []);
 
   function toggleTheme() {
+     // switch theme and save preference
     const next = !isDark;
     setIsDark(next);
     AsyncStorage.setItem('darkMode', String(next));
   }
 
   return (
+    // share theme with the whole app
     <ThemeContext.Provider value={{ isDark, colours: isDark ? darkColours : lightColours, toggleTheme }}>
       {children}
     </ThemeContext.Provider>

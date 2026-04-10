@@ -18,7 +18,7 @@ export const darkColours = {
   surface:       '#1E293B',
   textPrimary:   '#F1F5F9',
   textSecondary: '#94A3B8',
-  textMuted:     '#64748B',
+  textMuted:     '#94A3B8',
   border:        '#334155',
   error:         '#EF4444',
   success:       '#22C55E',

@@ -15,8 +15,9 @@ import {
 } from 'react-native';
 
 type Category = typeof categoriesTable.$inferSelect;
-
+// list of colours to choose from
 const COLOUR_OPTIONS = ['#E8A838','#3AAA5E','#D94F3D','#4A90D9','#9B59B6','#E67E22','#1ABC9C','#E74C3C'];
+// list of icons to choose from
 const ICON_OPTIONS = [
   { name: 'map-outline', lib: 'Ionicons' },
   { name: 'bank', lib: 'MaterialCommunityIcons' },
@@ -46,7 +47,7 @@ export default function CategoriesScreen() {
 
     header: {
       paddingHorizontal: 20,
-      paddingTop: 16,
+      paddingTop: 60,
       paddingBottom: 8,
     },
 
@@ -181,27 +182,48 @@ export default function CategoriesScreen() {
     },
   });
 
+  // get categories from the database
   async function load() {
     const rows = await db.select().from(categoriesTable);
     setCategories(rows);
   }
 
+  // load once when screen opens
   useEffect(() => { load(); }, []);
 
+// save or update category
   async function handleSave() {
     if (!name.trim()) { Alert.alert('Name required'); return; }
     if (editingId) {
+      // update existing categroy in database
       await db.update(categoriesTable).set({ name: name.trim(), colour, icon }).where(eq(categoriesTable.id, editingId));
     } else {
+       // add new categroy 
       await db.insert(categoriesTable).values({ name: name.trim(), colour, icon });
     }
+    // reset form after saving
     setName(''); setColour(COLOUR_OPTIONS[0]); setIcon(ICON_OPTIONS[0].name); setEditingId(null);
     load();
   }
 
+  // fill form with selected category
   function startEdit(cat: Category) {
     setEditingId(cat.id); setName(cat.name); setColour(cat.colour); setIcon(cat.icon);
   }
+
+  async function deleteCategory(id: number) {
+  Alert.alert('Delete category', 'Are you sure?', [
+    { text: 'Cancel', style: 'cancel' },
+    {
+      text: 'Delete',
+      style: 'destructive',
+      onPress: async () => {
+        await db.delete(categoriesTable).where(eq(categoriesTable.id, id));
+        load(); // refresh list
+      },
+    },
+  ]);
+}
 
   return (
     <SafeAreaView style={styles.safe}>
@@ -209,7 +231,7 @@ export default function CategoriesScreen() {
         <Text style={styles.title}>Categories</Text>
       </View>
 
-      {/* Form */}
+      {/* form for adding/editing */}
       <View style={styles.form}>
         <TextInput style={styles.input} placeholder="Category name" placeholderTextColor={colours.textMuted}
           value={name} onChangeText={setName} accessibilityLabel="Category name" />
@@ -240,9 +262,12 @@ export default function CategoriesScreen() {
 ))}
         </View>
 
+        {/* save button */}
         <TouchableOpacity style={styles.saveBtn} onPress={handleSave} accessibilityRole="button">
           <Text style={styles.saveBtnText}>{editingId ? 'Update Category' : 'Add Category'}</Text>
         </TouchableOpacity>
+
+        {/* cancel editing */}
         {editingId && (
           <TouchableOpacity onPress={() => { setEditingId(null); setName(''); }} accessibilityRole="button">
             <Text style={styles.cancelText}>Cancel edit</Text>
@@ -250,6 +275,7 @@ export default function CategoriesScreen() {
         )}
       </View>
 
+        {/* list of saved categories */}
       <FlatList
         data={categories}
         keyExtractor={item => item.id.toString()}
@@ -257,6 +283,8 @@ export default function CategoriesScreen() {
         renderItem={({ item }) => (
           <TouchableOpacity style={styles.catRow} onPress={() => startEdit(item)}
             accessibilityRole="button" accessibilityLabel={`Edit ${item.name}`}>
+
+              {/* coloured icon circle */}
             <View style={[styles.catIcon, { backgroundColor: item.colour }]}>
               {ICON_OPTIONS.find(i => i.name === item.icon)?.lib === 'MaterialCommunityIcons' ? (
   <MaterialCommunityIcons name={item.icon as any} size={20} color="#fff" />
@@ -264,9 +292,21 @@ export default function CategoriesScreen() {
   <Ionicons name={item.icon as any} size={20} color="#fff" />
 )}
             </View>
-            <Text style={styles.catName}>{item.name}</Text>
-            <Text style={styles.editHint}>Edit →</Text>
-          </TouchableOpacity>
+            <View style={{ flex: 1 }}>
+  <Text style={styles.catName}>{item.name}</Text>
+  <Text style={{ fontSize: 12, color: colours.textMuted }}>
+    Tap to edit
+  </Text>
+</View>
+            <TouchableOpacity
+  onPress={(e) => {
+    e.stopPropagation(); // stops triggering edit
+    deleteCategory(item.id);
+  }}
+>
+  <Ionicons name="trash-outline" size={18} color={colours.error} />
+</TouchableOpacity>
+</TouchableOpacity>
         )}
       />
     </SafeAreaView>

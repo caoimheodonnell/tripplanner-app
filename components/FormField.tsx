@@ -1,7 +1,3 @@
-// components/FormField.tsx
-// Reusable labelled text input — used in add-trip, edit, add-activity forms
-// Tested in tests/component.test.tsx
-
 import { useTheme } from '@/context/ThemeContext';
 import { StyleSheet, Text, TextInput, View } from 'react-native';
 
@@ -13,6 +9,7 @@ type Props = {
   multiline?: boolean;
 };
 
+// reusable input field 
 export default function FormField({
   label,
   value,
@@ -22,7 +19,7 @@ export default function FormField({
 }: Props) {
   const { colours } = useTheme();
 
-  // ✅ FIX: styles inside component
+  
   const styles = StyleSheet.create({
     container: {
       marginBottom: 16,
@@ -52,7 +49,9 @@ export default function FormField({
 
   return (
     <View style={styles.container}>
+    
       <Text style={styles.label}>{label}</Text>
+    {/* text input */}
       <TextInput
         style={[styles.input, multiline && styles.multiline]}
         value={value}

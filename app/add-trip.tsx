@@ -13,6 +13,21 @@ import {
   View,
 } from 'react-native';
 
+// check if date is valid (YYYY-MM-DD)
+function isValidDate(date: string) {
+  const regex = /^\d{4}-\d{2}-\d{2}$/;
+  if (!regex.test(date)) return false;
+
+  const [year, month, day] = date.split('-').map(Number);
+  const d = new Date(year, month - 1, day);
+
+  return (
+    d.getFullYear() === year &&
+    d.getMonth() === month - 1 &&
+    d.getDate() === day
+  );
+}
+
 export default function AddTripScreen() {
   const router = useRouter();
   const [name, setName] = useState('');
@@ -68,12 +83,25 @@ export default function AddTripScreen() {
     },
   });
 
+  // create a new trip
   async function handleSave() {
     if (!name.trim() || !destination.trim() || !startDate || !endDate) {
       Alert.alert('Missing fields', 'Please fill in name, destination, and dates.');
       return;
     }
 
+    // validate both dates
+  if (!isValidDate(startDate) || !isValidDate(endDate)) {
+    Alert.alert('Invalid date', 'Use format YYYY-MM-DD (e.g. 2026-06-12)');
+    return;
+  }
+
+  // check date order
+  if (endDate < startDate) {
+    Alert.alert('Invalid dates', 'End date must be after start date');
+    return;
+  }
+    // get logged in user
     const token = await AsyncStorage.getItem('sessionToken');
 if (!token) return;
 const [authedUser] = await db.select().from(usersTable).where(eq(usersTable.sessionToken, token));
@@ -84,6 +112,7 @@ if (!userId) {
       return;
     }
 
+     // save trip to database
     await db.insert(tripsTable).values({
       name: name.trim(),
       destination: destination.trim(),
@@ -104,7 +133,7 @@ if (!userId) {
     <SafeAreaView style={styles.safe}>
       <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
 
-        {/* Header */}
+        {/* header with cancel and save */}
         <View style={styles.header}>
           <TouchableOpacity onPress={() => router.back()}>
             <Text style={styles.cancel}>Cancel</Text>
@@ -119,7 +148,7 @@ if (!userId) {
           </TouchableOpacity>
         </View>
 
-        {/* Form */}
+        {/* trip form */}
         <Field label="Trip name" required styles={styles} colours={colours}>
           <TextInput
             style={styles.input}
@@ -143,7 +172,7 @@ if (!userId) {
         <Field label="Start date (YYYY-MM-DD)" required styles={styles} colours={colours}>
           <TextInput
             style={styles.input}
-            placeholder="2025-07-01"
+            placeholder="2026-07-01"
             placeholderTextColor={colours.textMuted}
             value={startDate}
             onChangeText={setStartDate}
@@ -154,7 +183,7 @@ if (!userId) {
         <Field label="End date (YYYY-MM-DD)" required styles={styles} colours={colours}>
           <TextInput
             style={styles.input}
-            placeholder="2025-07-10"
+            placeholder="2026-07-10"
             placeholderTextColor={colours.textMuted}
             value={endDate}
             onChangeText={setEndDate}
@@ -178,7 +207,7 @@ if (!userId) {
   );
 }
 
-
+// reusable form field - label and input 
 function Field({
   label,
   required,

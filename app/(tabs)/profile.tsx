@@ -36,7 +36,7 @@ export default function ProfileScreen() {
 
   const styles = StyleSheet.create({
     safe:    { flex: 1, backgroundColor: colours.background },
-    content: { padding: 20, gap: 14 },
+    content: { padding: 20, gap: 14 ,paddingTop: 60, },
     title:   { fontSize: 28, fontWeight: '800', color: colours.textPrimary },
 
     sectionRow:   { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
@@ -126,6 +126,7 @@ greetingName: {
 
   
 
+  // load user and targets and categories
   async function load() {
   const token = await AsyncStorage.getItem('sessionToken');
   if (!token) return;
@@ -135,9 +136,11 @@ if (!userId) return;
 
 if (user) setUserName(user.name);   // user is already fetched above — no second query needed
 
+// get categories for filter
 const cats = await db.select().from(categoriesTable);
 setCategories(cats);
 
+// get user's targets
     const rows = await db
       .select()
       .from(targetsTable)
@@ -147,13 +150,15 @@ setCategories(cats);
     await calculateProgress(rows);
   }
 
+  // calculate the progress for each target
   async function calculateProgress(rows: Target[]) {
     const now = new Date();
     const prog: Record<number, number> = {};
 
     for (const target of rows) {
       let start: string;
-
+      
+      // figure out where to start counting from
       if (target.period === 'weekly') {
         const day = now.getDay();
         const monday = new Date(now);
@@ -175,6 +180,7 @@ if (!userId) return;
         .from(activitiesTable)
         .where(eq(activitiesTable.userId, Number(userId)));
 
+        // only include activities in time range
       const inRange = acts.filter(a =>
         a.date >= start &&
         (!target.categoryId || a.categoryId === target.categoryId)
@@ -200,6 +206,7 @@ if (!userId) return;
 
   
 
+// add or update a target
   async function handleSave() {
   if (!label.trim() || !targetValue) {
     Alert.alert('Fill in all fields');
@@ -222,16 +229,19 @@ if (!userId) return;
   };
 
   if (editingId) {
+    // save changes to existing target
     await db.update(targetsTable)
       .set(payload)
       .where(eq(targetsTable.id, editingId));
   } else {
+     // create new target
     await db.insert(targetsTable).values({
       ...payload,
       createdAt: new Date().toISOString(),
     });
   }
 
+  // reset form
   setLabel('');
   setTargetValue('');
   setEditingId(null);
@@ -241,6 +251,7 @@ if (!userId) return;
   load();
 }
 
+// delete target
   async function handleDelete(id: number) {
     Alert.alert('Delete target', 'Are you sure?', [
       { text: 'Cancel', style: 'cancel' },
@@ -263,7 +274,7 @@ if (!userId) return;
     setShowForm(true);
   }
 
-  // logout
+  // log user out and clear session
 async function handleLogout() {
   const token = await AsyncStorage.getItem('sessionToken');
   if (token) {
@@ -306,6 +317,7 @@ async function handleDeleteAccount() {
   ]);
 }
 
+// turn reminders on/off
   async function toggleNotifications() {
     if (notificationsOn) {
       await cancelAllReminders();
@@ -509,7 +521,7 @@ async function handleDeleteAccount() {
           </View>
         </View>
 
-        
+        {/* dark mode toggle */}
         <Text style={styles.sectionHeader}>Appearance</Text>
         <View style={styles.card}>
           <View style={styles.notifRow}>
@@ -526,7 +538,7 @@ async function handleDeleteAccount() {
           </View>
         </View>
 
-        
+        {/* account actions */}
         <Text style={styles.sectionHeader}>Account</Text>
 
         <View style={styles.card}>

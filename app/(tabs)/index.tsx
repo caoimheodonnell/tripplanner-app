@@ -16,16 +16,46 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+
 type Trip = typeof tripsTable.$inferSelect;
 
 export default function TripsScreen() {
   const router = useRouter();
+  // trips list and search and loading state
   const [trips, setTrips] = useState<Trip[]>([]);
   const [search, setSearch] = useState('');
   const [loading, setLoading] = useState(true);
   const { colours } = useTheme();
 
-  
+  const [dateFrom, setDateFrom] = useState('');
+  const [dateTo, setDateTo] = useState('');
+
+const filteredTrips = trips
+  .filter(t =>
+    search ? t.name.toLowerCase().includes(search.toLowerCase()) : true
+  )
+  .filter(t => {
+    let tripStart = t.startDate;
+    let tripEnd = t.endDate;
+
+    
+    if (dateFrom) {
+      const len = dateFrom.length;
+      tripEnd = tripEnd.slice(0, len);
+
+      if (tripEnd < dateFrom) return false;
+    }
+
+    if (dateTo) {
+      const len = dateTo.length;
+      tripStart = tripStart.slice(0, len);
+
+      if (tripStart > dateTo) return false;
+    }
+
+    return true;
+  });
+
   const styles = StyleSheet.create({
     safe: {
       flex: 1,
@@ -90,7 +120,7 @@ export default function TripsScreen() {
     },
   });
 
-
+// get current logged in user from storage and db
 async function getLoggedInUserId(): Promise<number | null> {
   const token = await AsyncStorage.getItem('sessionToken');
   if (!token) return null;
@@ -99,11 +129,12 @@ async function getLoggedInUserId(): Promise<number | null> {
   return user?.id ?? null;
 }
 
-
+ // load trips 
 async function loadTrips(query = '') {
   setLoading(true);
 
-  const userId = await getLoggedInUserId();  // ← actually CALL it here
+  const userId = await getLoggedInUserId();  
+  // if no user send to login
   if (!userId) {
     router.replace('/login');
     return;
@@ -112,6 +143,7 @@ async function loadTrips(query = '') {
   let rows: Trip[];
 
   if (query.trim()) {
+    // filter trips by name and user
     rows = await db
       .select()
       .from(tripsTable)
@@ -123,6 +155,7 @@ async function loadTrips(query = '') {
       )
       .orderBy(desc(tripsTable.createdAt));
   } else {
+    // get all trips for user
     rows = await db
       .select()
       .from(tripsTable)
@@ -130,21 +163,25 @@ async function loadTrips(query = '') {
       .orderBy(desc(tripsTable.createdAt));
   }
 
-  setTrips(rows);
-  setLoading(false);
+  
+setTrips(rows);
+setLoading(false);
 }
 
+// reload trips when screen is focused or search changes
   useFocusEffect(
-    useCallback(() => {
-      loadTrips(search);
-    }, [search])
-  );
+  useCallback(() => {
+    loadTrips();
+  }, [])
+);
 
+  // update search text and reload results
   function handleSearch(text: string) {
     setSearch(text);
     loadTrips(text);
   }
 
+  // clear search and reload everything
   function clearSearch() {
     setSearch('');
     loadTrips('');
@@ -156,6 +193,7 @@ async function loadTrips(query = '') {
       <View style={styles.header}>
   <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
     
+    {/* app logo */}
     <Image
       source={require('../../assets/images/Trip Planner.png')}
       style={{ width: 60, height: 60 }}
@@ -166,6 +204,7 @@ async function loadTrips(query = '') {
     </Text>
 
   </View>
+  {/* button to add a new trip */}
         <TouchableOpacity
           style={styles.addButton}
           onPress={() => router.push('/add-trip')}
@@ -176,7 +215,7 @@ async function loadTrips(query = '') {
         </TouchableOpacity>
       </View>
 
-      {/* Search */}
+      {/* search */}
       <View style={styles.searchRow}>
         <TextInput
           style={styles.searchInput}
@@ -185,6 +224,7 @@ async function loadTrips(query = '') {
           value={search}
           onChangeText={handleSearch}
         />
+        {/* clear button only shows when typing */}
         {search.length > 0 && (
           <TouchableOpacity onPress={clearSearch}>
             <Text style={styles.clearText}>Clear</Text>
@@ -192,13 +232,36 @@ async function loadTrips(query = '') {
         )}
       </View>
 
-      {/* Results */}
+          <View style={{ flexDirection: 'row', gap: 8, marginHorizontal: 20, marginBottom: 10 }}>
+      <TextInput
+          style={styles.searchInput}
+          placeholder="From YYYY-MM-DD"
+          placeholderTextColor={colours.textMuted}
+          value={dateFrom}
+          onChangeText={setDateFrom}
+          keyboardType="numeric"
+          maxLength={10}
+        />
+      <TextInput
+      style={styles.searchInput}
+      placeholder="To YYYY-MM-DD"
+      placeholderTextColor={colours.textMuted}
+      value={dateTo}
+      onChangeText={setDateTo}
+      keyboardType="numeric"
+      maxLength={10}
+    />
+    </View>
+
+      {/* results */}
       {loading ? (
         <View style={styles.center}>
           <Text style={styles.loadingText}>Loading...</Text>
         </View>
-      ) :trips.length === 0 ? (
-  search.length > 0 ? (
+      ) :filteredTrips.length === 0 ? (
+
+        // nothing found
+  (search.length > 0 || dateFrom || dateTo) ? (
     <EmptyState
       iconName="map-outline"
       iconLib="Ionicons"
@@ -217,9 +280,10 @@ async function loadTrips(query = '') {
       onAction={() => router.push('/add-trip')}
     />
   )
-) : (
+) : (   
+  // list of trips
         <FlatList
-          data={trips}
+          data={filteredTrips}
           keyExtractor={(item) => item.id.toString()}
           contentContainerStyle={styles.list}
           renderItem={({ item }) => (

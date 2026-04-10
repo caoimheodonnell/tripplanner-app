@@ -207,6 +207,7 @@ pillTextSelected: {
 },
   });
 
+  // load trip ,activities, categories and  weather
   async function load() {
   const token = await AsyncStorage.getItem('sessionToken');
   if (!token) return;
@@ -214,11 +215,12 @@ pillTextSelected: {
   const userId = authedUser?.id;
   if (!userId) return;
 
+  // get categories for filters
   const cats = await db.select().from(categoriesTable);
   setCategories(cats);
 
     
-
+    // get the trips
     const [tripRow] = await db
       .select()
       .from(tripsTable)
@@ -231,6 +233,7 @@ pillTextSelected: {
 
     setTrip(tripRow ?? null);
 
+    // get weather for destination
     if (tripRow?.destination) {
   setWeatherLoading(true);
   setWeatherError('');
@@ -243,6 +246,7 @@ pillTextSelected: {
     .finally(() => setWeatherLoading(false));
 }
 
+  // get activities for this trip
     const rows = await db
       .select({
         id: activitiesTable.id,
@@ -277,6 +281,7 @@ pillTextSelected: {
     load();
   }, [id]);
 
+  // delete trip and its activities
   async function deleteTrip() {
     Alert.alert('Delete trip', 'Are you sure?', [
       { text: 'Cancel', style: 'cancel' },
@@ -292,12 +297,14 @@ pillTextSelected: {
     ]);
   }
 
+  // reset all filters
   function clearFilters() {
   setSelectedCategory(null);
   setDateFrom('');
   setDateTo('');
 }
 
+// apply filters - categroy and date 
   const filtered = activities
     .filter(a => selectedCategory ? a.categoryId === selectedCategory : true)
     .filter(a => dateFrom ? a.date >= dateFrom : true)
@@ -319,7 +326,7 @@ pillTextSelected: {
   return (
     <SafeAreaView style={styles.safe}>
       
-      {/* Header */}
+      {/* header */}
       <View style={styles.header}>
         <TouchableOpacity onPress={() => router.back()}>
           <View style={styles.row}>
@@ -332,15 +339,18 @@ pillTextSelected: {
           <TouchableOpacity onPress={() => router.push(`/trip/${id}/edit`)}>
             <Text style={styles.actionText}>Edit</Text>
           </TouchableOpacity>
-          <TouchableOpacity onPress={deleteTrip}>
-            <Text style={[styles.actionText, { color: colours.error }]}>
-              Delete
-            </Text>
-          </TouchableOpacity>
+              <TouchableOpacity onPress={deleteTrip}>
+      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+        <Ionicons name="trash-outline" size={16} color={colours.error} />
+        <Text style={[styles.actionText, { color: colours.error }]}>
+          Delete
+        </Text>
+      </View>
+    </TouchableOpacity>
         </View>
       </View>
 
-      {/* Trip Banner */}
+      {/* trip outline */}
       <View style={[styles.tripBanner, { backgroundColor: trip.coverColour }]}>
         <Text style={styles.tripName}>{trip.name}</Text>
 
@@ -354,10 +364,22 @@ pillTextSelected: {
           <Text style={styles.tripDates}>
             {trip.startDate} - {trip.endDate}
           </Text>
-        </View>
+           </View>
+
+           {/* notes section */}
+{trip.notes && (
+  <View style={{ marginTop: 10 }}>
+    <Text style={{ color: '#fff', fontSize: 11, opacity: 0.7 }}>
+      Notes
+    </Text>
+    <Text style={{ color: '#fff', fontSize: 13 }}>
+      {trip.notes}
+    </Text>
+  </View>
+)}
       </View>
 
-{/* Weather */}
+{/* Wweather info */}
 <View style={styles.weatherCard}>
   <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
   <Ionicons
@@ -387,7 +409,7 @@ pillTextSelected: {
   )}
 </View>
 
-      {/* Header Row */}
+      {/* activities header and add button */}
       <View style={styles.sectionRow}>
         <Text style={styles.sectionTitle}>
           Activities ({filtered.length})
@@ -401,17 +423,19 @@ pillTextSelected: {
         </TouchableOpacity>
       </View>
 
-      {/* Filters */}
+      {/* date filters */}
       <View style={styles.dateRow}>
         <TextInput
           style={styles.dateInput}
           placeholder="From YYYY-MM-DD"
+          placeholderTextColor={colours.textMuted}
           value={dateFrom}
           onChangeText={setDateFrom}
         />
         <TextInput
           style={styles.dateInput}
           placeholder="To YYYY-MM-DD"
+          placeholderTextColor={colours.textMuted}
           value={dateTo}
           onChangeText={setDateTo}
         />
@@ -457,7 +481,7 @@ pillTextSelected: {
 ))}
       </View>
 
-      
+      {/* empty state or activity list */}
       {filtered.length === 0 ? (
         <EmptyState
           title={activities.length === 0 ? "Nothing planned yet" : "No activities match"}
@@ -466,7 +490,7 @@ pillTextSelected: {
     ? "Start building your itinerary by adding your first activity"
     : `Filtering by ${
         selectedCategory
-          ? uniqueCategories.find(c => c.categoryId === selectedCategory)?.categoryName
+          ? uniqueCategories.find(c => c.id === selectedCategory)?.name
           : 'all categories'
       }${dateFrom ? ` from ${dateFrom}` : ''}${
         dateTo ? ` to ${dateTo}` : ''
@@ -505,6 +529,19 @@ pillTextSelected: {
                       ? ` · ${item.durationMinutes} min`
                       : ''}
                   </Text>
+
+                  {item.notes && (
+  <Text
+    style={{
+      fontSize: 12,
+      color: colours.textMuted,
+      marginTop: 4,
+    }}
+    numberOfLines={2}
+  >
+    {item.notes}
+  </Text>
+)}
                 </View>
 
                 <Ionicons

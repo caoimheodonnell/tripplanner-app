@@ -42,6 +42,7 @@ function AppContent() {
   });
 
   useEffect(() => {
+    // floating animation for loading icon
     Animated.loop(
       Animated.sequence([
         Animated.timing(floatAnim, {
@@ -63,6 +64,8 @@ function AppContent() {
   useEffect(() => {
     async function init() {
       await seedIfEmpty();
+
+      // check if user is logged in
       const token = await AsyncStorage.getItem('sessionToken');
 setLoggedIn(!!token);
       setReady(true);
@@ -70,11 +73,12 @@ setLoggedIn(!!token);
     init();
   }, []);
 
+  // show loading screen while app is loading
   if (!ready) {
     return (
       <View style={styles.loading}>
         <Animated.View style={{ transform: [{ translateY: floatAnim }] }}>
-          <Ionicons name="airplane-outline" size={48} color={colours.primary} />
+          <Ionicons name="briefcase-outline" size={48} color={colours.primary} />
         </Animated.View>
         <Text style={styles.loadingText}>Packing your bags...</Text>
       </View>

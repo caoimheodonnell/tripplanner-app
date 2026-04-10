@@ -1,14 +1,14 @@
 import { render, waitFor } from '@testing-library/react-native';
 import React from 'react';
 
-
+// mock async storage (pretend user is logged in)
 jest.mock('@react-native-async-storage/async-storage', () => ({
   getItem:    jest.fn().mockResolvedValue('1'),
   setItem:    jest.fn().mockResolvedValue(undefined),
   removeItem: jest.fn().mockResolvedValue(undefined),
 }));
 
-
+// mock theme so styles don’t break
 jest.mock('@/context/ThemeContext', () => ({
   useTheme: () => ({
     isDark: false,
@@ -31,7 +31,7 @@ jest.mock('@/context/ThemeContext', () => ({
   }),
 }));
 
-
+// mock colours
 jest.mock('@/constants/colours', () => ({
   colours: {
     background:    '#F7F7F7',
@@ -74,7 +74,7 @@ jest.mock('@/constants/colours', () => ({
   },
 }));
 
-
+// fake trip data
 const MOCK_TRIPS = [
   {
     id: 1,
@@ -99,7 +99,7 @@ const MOCK_TRIPS = [
     createdAt: '2024-09-01T00:00:00.000Z',
   },
 ];
-
+// mock database
 jest.mock('@/db/client', () => ({
   db: {
     select: jest.fn(),
@@ -108,6 +108,7 @@ jest.mock('@/db/client', () => ({
   },
 }));
 
+// mock schema 
 jest.mock('@/db/schema', () => ({
   tripsTable:      { createdAt: 'createdAt', name: 'name', userId: 'userId' },
   categoriesTable: {},
@@ -124,7 +125,7 @@ jest.mock('drizzle-orm', () => ({
   and:  jest.fn(),
 }));
 
-
+// mock navigation and focus effect
 jest.mock('expo-router', () => ({
   useRouter:       () => ({ push: jest.fn(), back: jest.fn(), replace: jest.fn() }),
   useFocusEffect:  jest.fn().mockImplementation((cb) => {
@@ -132,7 +133,7 @@ jest.mock('expo-router', () => ({
   }),
 }));
 
-
+// mock TripCard
 jest.mock('@/components/TripCard', () => {
   const { Text } = require('react-native');
   return ({ trip }: { trip: { name: string } }) => (
@@ -153,8 +154,10 @@ import { db } from '@/db/client';
 describe('TripsScreen – integration tests', () => {
 
   beforeEach(() => {
+    // reset mocks before each test
     jest.clearAllMocks();
-
+    
+// default DB response
     (db.select as jest.Mock).mockReturnValue({
       from: jest.fn().mockReturnValue({
         where: jest.fn().mockReturnValue({

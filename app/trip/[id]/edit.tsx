@@ -12,6 +12,19 @@ import {
   View,
 } from 'react-native';
 
+function isValidDate(date: string) {
+  const regex = /^\d{4}-\d{2}-\d{2}$/;
+  if (!regex.test(date)) return false;
+
+  const [year, month, day] = date.split('-').map(Number);
+  const d = new Date(year, month - 1, day);
+
+  return (
+    d.getFullYear() === year &&
+    d.getMonth() === month - 1 &&
+    d.getDate() === day
+  );
+}
 export default function EditTripScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
@@ -41,7 +54,9 @@ export default function EditTripScreen() {
 
   useEffect(() => {
     async function load() {
+      // get trip to edit
       const [trip] = await db.select().from(tripsTable).where(eq(tripsTable.id, Number(id)));
+      // fill form with existing data
       if (trip) {
         setName(trip.name);
         setDestination(trip.destination);
@@ -53,11 +68,24 @@ export default function EditTripScreen() {
     load();
   }, [id]);
 
+// save changes to trip
   async function handleSave() {
     if (!name.trim() || !destination.trim() || !startDate || !endDate) {
       Alert.alert('Missing fields', 'Please fill in all required fields.');
       return;
     }
+
+    // validate format
+  if (!isValidDate(startDate) || !isValidDate(endDate)) {
+    Alert.alert('Invalid date', 'Use format YYYY-MM-DD (e.g. 2026-06-12)');
+    return;
+  }
+
+  // validate order
+  if (endDate < startDate) {
+    Alert.alert('Invalid dates', 'End date must be after start date');
+    return;
+  }
     await db.update(tripsTable).set({
       name: name.trim(),
       destination: destination.trim(),
@@ -73,6 +101,7 @@ export default function EditTripScreen() {
   return (
     <SafeAreaView style={styles.safe}>
       <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
+        {/* header with cancel and save */}
         <View style={styles.header}>
           <TouchableOpacity onPress={() => router.back()}>
             <Text style={styles.cancel}>Cancel</Text>
@@ -83,18 +112,22 @@ export default function EditTripScreen() {
           </TouchableOpacity>
         </View>
 
+        {/* trip name */}
         <View style={styles.field}>
           <Text style={styles.label}>Trip name <Text style={{color: colours.error}}>*</Text></Text>
           <TextInput style={styles.input} value={name} onChangeText={setName} accessibilityLabel="Trip name" />
         </View>
+        {/* destination */}
         <View style={styles.field}>
           <Text style={styles.label}>Destination <Text style={{color: colours.error}}>*</Text></Text>
           <TextInput style={styles.input} value={destination} onChangeText={setDestination} accessibilityLabel="Destination" />
         </View>
+        {/* start date */}
         <View style={styles.field}>
           <Text style={styles.label}>Start date (YYYY-MM-DD) <Text style={{color: colours.error}}>*</Text></Text>
           <TextInput style={styles.input} value={startDate} onChangeText={setStartDate} keyboardType="numeric" accessibilityLabel="Start date" />
         </View>
+        {/* end date */}
         <View style={styles.field}>
           <Text style={styles.label}>End date (YYYY-MM-DD) <Text style={{color: colours.error}}>*</Text></Text>
           <TextInput style={styles.input} value={endDate} onChangeText={setEndDate} keyboardType="numeric" accessibilityLabel="End date" />

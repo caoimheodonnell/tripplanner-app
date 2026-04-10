@@ -113,42 +113,50 @@ export default function LoginScreen() {
     },
   });
 
+  // log user in
   async function handleLogin() {
   if (!email.trim() || !password.trim()) {
     Alert.alert('Missing fields', 'Please enter your email and password.');
     return;
   }
+
+  // find user by email
   const [user] = await db.select().from(usersTable)
     .where(eq(usersTable.email, email.trim().toLowerCase()));
-  // hash entered password to compare
+
+  // hash password to compare
 const hashedPassword = await Crypto.digestStringAsync(
   Crypto.CryptoDigestAlgorithm.SHA256,
   password
 );
 
+// check login details
 if (!user || user.password !== hashedPassword) {
     Alert.alert('Login failed', 'Email or password is incorrect.');
     return;
   }
 
-  // Generate a random session token  never store userId or password directly
+   // create random session token
   const token = Math.random().toString(36).slice(2) + Date.now().toString(36);
 
-  // Save token to DB so we can look up the user later
+  // save token to user in database
   await db.update(usersTable)
     .set({ sessionToken: token })
     .where(eq(usersTable.id, user.id));
 
-  // Store ONLY the token in AsyncStorage (not userId, not password)
+  // store token locally
   await AsyncStorage.setItem('sessionToken', token);
   router.replace('/(tabs)');
 }
 
+// register new user
   async function handleRegister() {
     if (!name.trim() || !email.trim() || !password.trim()) {
       Alert.alert('Missing fields', 'Please fill in all fields.');
       return;
     }
+
+    // check if email already exists
     const existing = await db.select().from(usersTable)
       .where(eq(usersTable.email, email.trim().toLowerCase()));
     if (existing.length > 0) {
@@ -156,12 +164,13 @@ if (!user || user.password !== hashedPassword) {
       return;
     }
     
-
+// hash password before saving
 const hashedPassword = await Crypto.digestStringAsync(
   Crypto.CryptoDigestAlgorithm.SHA256,
   password
 );
 
+// create user
 await db.insert(usersTable).values({
   name: name.trim(),
   email: email.trim().toLowerCase(),
@@ -190,6 +199,7 @@ await db.insert(usersTable).values({
 <Text style={styles.logo}>Trip Planner</Text>
         <Text style={styles.tagline}>Plan your adventures</Text>
 
+        {/* login or register switch */}
         <View style={styles.toggleRow}>
           <TouchableOpacity
             style={[styles.toggleBtn, mode === 'login' && styles.toggleActive]}
@@ -205,6 +215,7 @@ await db.insert(usersTable).values({
           </TouchableOpacity>
         </View>
 
+        {/* name field - register only */}
         {mode === 'register' && (
           <View style={styles.field}>
             <Text style={styles.label}>Name</Text>
@@ -229,6 +240,7 @@ await db.insert(usersTable).values({
             secureTextEntry accessibilityLabel="Password" />
         </View>
 
+        {/* submit button */}
         <TouchableOpacity
           style={styles.button}
           onPress={mode === 'login' ? handleLogin : handleRegister}

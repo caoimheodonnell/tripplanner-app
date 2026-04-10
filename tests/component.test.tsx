@@ -1,18 +1,15 @@
-// tests/component.test.tsx
-// Component test: FormField renders its label and fires onChangeText correctly
-
 import FormField from '@/components/FormField';
 import { fireEvent, render } from '@testing-library/react-native';
 import React from 'react';
 
-
+// mock async storage (no real storage in tests)
 jest.mock('@react-native-async-storage/async-storage', () => ({
   getItem:    jest.fn().mockResolvedValue(null),
   setItem:    jest.fn().mockResolvedValue(undefined),
   removeItem: jest.fn().mockResolvedValue(undefined),
 }));
 
-
+// mock theme so component has colours
 jest.mock('@/context/ThemeContext', () => ({
   useTheme: () => ({
     isDark: false,
@@ -29,7 +26,7 @@ jest.mock('@/context/ThemeContext', () => ({
   }),
 }));
 
-
+// mock colours file
 jest.mock('@/constants/colours', () => ({
   colours: {
     textPrimary:   '#111827',
@@ -64,6 +61,7 @@ jest.mock('@/constants/colours', () => ({
 
 describe('FormField – component tests', () => {
 
+  // shows the label
   test('renders the label text', () => {
     const { getByText } = render(
       <FormField
@@ -75,6 +73,7 @@ describe('FormField – component tests', () => {
     expect(getByText('Trip Name')).toBeTruthy();
   });
 
+   // shows the value in the input
   test('renders with the correct initial value', () => {
     const { getByDisplayValue } = render(
       <FormField
@@ -86,6 +85,7 @@ describe('FormField – component tests', () => {
     expect(getByDisplayValue('Lisbon')).toBeTruthy();
   });
 
+   // updates value when user types
   test('calls onChangeText when the user types', () => {
     const mockOnChange = jest.fn();
 

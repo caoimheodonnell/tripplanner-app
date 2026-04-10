@@ -18,6 +18,7 @@ type Props = {
 };
 
 export default function EmptyState({ title, subtitle, actionLabel, onAction }: Props) {
+  // animation values for plane and clouds and trail
   const planeX    = useRef(new Animated.Value(-60)).current;
   const planeY    = useRef(new Animated.Value(0)).current;
   const cloudX1   = useRef(new Animated.Value(300)).current;
@@ -91,6 +92,7 @@ export default function EmptyState({ title, subtitle, actionLabel, onAction }: P
   });
 
   useEffect(() => {
+    // move plane across the screen
     Animated.loop(
       Animated.sequence([
         Animated.timing(planeX, {
@@ -107,6 +109,7 @@ export default function EmptyState({ title, subtitle, actionLabel, onAction }: P
       ])
     ).start();
 
+    // small up/down float for the plane
     Animated.loop(
       Animated.sequence([
         Animated.timing(planeY, {
@@ -124,6 +127,7 @@ export default function EmptyState({ title, subtitle, actionLabel, onAction }: P
       ])
     ).start();
 
+    // moving background clouds
     Animated.loop(
       Animated.timing(cloudX1, {
         toValue: -100,
@@ -133,6 +137,7 @@ export default function EmptyState({ title, subtitle, actionLabel, onAction }: P
       })
     ).start();
 
+    // fading dots behind the plane
     Animated.loop(
       Animated.sequence([
         Animated.delay(2000),
@@ -156,13 +161,17 @@ export default function EmptyState({ title, subtitle, actionLabel, onAction }: P
 
   return (
     <View style={styles.container}>
+      {/* animation area */}
       <View style={styles.stage}>
+
+        {/* trail behind plane */}
         <Animated.View style={[styles.trailRow, { opacity: dotOpacity }]}>
           {[...Array(8)].map((_, i) => (
             <View key={i} style={styles.dot} />
           ))}
         </Animated.View>
 
+          {/* clouds */}
         <Animated.View style={[styles.cloud, { transform: [{ translateX: cloudX1 }], top: 10 }]}>
           <MaterialCommunityIcons name="cloud-outline" size={26} color={colours.textSecondary} />
         </Animated.View>
@@ -171,6 +180,7 @@ export default function EmptyState({ title, subtitle, actionLabel, onAction }: P
           <MaterialCommunityIcons name="cloud-outline" size={22} color={colours.textSecondary} />
         </Animated.View>
 
+          {/* flying plane */}
         <Animated.View
           style={[
             styles.plane,

@@ -4,9 +4,10 @@ export const categoriesTable = sqliteTable('categories', {
   id: integer('id').primaryKey({ autoIncrement: true }),
   name: text('name').notNull(),
   colour: text('colour').notNull().default('#4A90D9'),
-  icon: text('icon').notNull().default('🗺️'),
+  icon: text('icon').notNull().default('map-outline'),
 });
 
+// trips created by user
 export const tripsTable = sqliteTable('trips', {
   id: integer('id').primaryKey({ autoIncrement: true }),
   name: text('name').notNull(),
@@ -19,6 +20,7 @@ export const tripsTable = sqliteTable('trips', {
   createdAt: text('created_at').notNull(),
 });
 
+// activities inside a trip
 export const activitiesTable = sqliteTable('activities', {
   id: integer('id').primaryKey({ autoIncrement: true }),
   tripId: integer('trip_id').notNull(),
@@ -32,6 +34,7 @@ export const activitiesTable = sqliteTable('activities', {
   createdAt: text('created_at').notNull(),
 });
 
+// user  targets (weekly or monthly)
 export const targetsTable = sqliteTable('targets', {
   id: integer('id').primaryKey({ autoIncrement: true }),
   label: text('label').notNull(),
@@ -43,6 +46,7 @@ export const targetsTable = sqliteTable('targets', {
   createdAt: text('created_at').notNull(),
 });
 
+// users -login and account info
 export const usersTable = sqliteTable('users', {
   id: integer('id').primaryKey({ autoIncrement: true }),
   name: text('name').notNull(),

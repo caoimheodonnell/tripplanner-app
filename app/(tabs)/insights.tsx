@@ -19,13 +19,20 @@ import {
 } from 'react-native';
 import { BarChart, PieChart } from 'react-native-gifted-charts';
 
+// format date as YYYY-MM-DD 
+function formatDate(date: Date) {
+  return date.toISOString().split('T')[0];
+} 
 type Slice = { value: number; color: string; text: string; label: string };
 
 export default function InsightsScreen() {
+  // main stats
   const [tripCount, setTripCount]       = useState(0);
   const [activityCount, setActivityCount] = useState(0);
   const [totalHours, setTotalHours]     = useState(0);
+  // chart data
   const [pieData, setPieData]           = useState<Slice[]>([]);
+  // streak of activities booked on the date
   const [streak, setStreak] = useState(0);
   const { colours } = useTheme();
   const [barData, setBarData] = useState<any[]>([]);
@@ -33,7 +40,7 @@ export default function InsightsScreen() {
   
   const styles = StyleSheet.create({
     safe: { flex: 1, backgroundColor: colours.background },
-    content: { padding: 20, gap: 16 },
+    content: { padding: 20, gap: 16, paddingTop: 60,  },
     title: { fontSize: 28, fontWeight: '800', color: colours.textPrimary },
     subtitle: { fontSize: 14, color: colours.textSecondary, marginBottom: 4 },
 
@@ -82,6 +89,8 @@ export default function InsightsScreen() {
     },
 
     chartWrap: { alignItems: 'center', paddingVertical: 8 },
+
+  
     centerLabel: { alignItems: 'center' },
     centerNum: { fontSize: 26, fontWeight: '900', color: colours.textPrimary },
     centerSub: { fontSize: 12, color: colours.textSecondary },
@@ -103,9 +112,9 @@ export default function InsightsScreen() {
       gap: 16,
     },
     streakCardActive: {
-      backgroundColor: '#FFF7ED',
-      borderColor: '#FED7AA',
-    },
+  backgroundColor: colours.primaryDim,
+  borderColor: colours.primary,
+},
     streakEmoji: { fontSize: 36 },
     streakNum: { fontSize: 24, fontWeight: '900', color: colours.textPrimary },
     streakLabel: { fontSize: 13, color: colours.textSecondary },
@@ -125,12 +134,14 @@ export default function InsightsScreen() {
     },
   });
   
+  // load all data for the screen
   async function load() {
   const token = await AsyncStorage.getItem('sessionToken');
   if (!token) return;
   const [user] = await db.select().from(usersTable).where(eq(usersTable.sessionToken, token));
   const userId = user?.id;
 
+  // if no user logged in reset everything
   if (!userId) {
     setTripCount(0);
     setActivityCount(0);
@@ -140,36 +151,44 @@ export default function InsightsScreen() {
     return;
   }
 
+  // get all user data
   const trips = await db.select().from(tripsTable).where(eq(tripsTable.userId, userId));
   const acts  = await db.select().from(activitiesTable).where(eq(activitiesTable.userId, userId));
   const cats  = await db.select().from(categoriesTable);
 
-  // Bar chart — last 7 days
+  // Bar chart with last 7 days
   const last7Days: Record<string, number> = {};
   for (let i = 0; i < 7; i++) {
-    const d = new Date();
-    d.setDate(d.getDate() - i);
-    last7Days[d.toLocaleDateString('en-CA')] = 0;
-  }
-  for (const a of acts) {
-  const d = new Date(a.date).toLocaleDateString('en-CA'); 
+  const d = new Date();
+  d.setDate(d.getDate() - i);
 
-  if (last7Days[d] !== undefined) {
-    last7Days[d]++;
+  const key = formatDate(d); 
+  last7Days[key] = 0;
+}
+  // count activities per day
+  for (const a of acts) {
+  const key = a.date; 
+
+  if (last7Days[key] !== undefined) {
+    last7Days[key]++;
   }
 }
+
+// chart layout
   const bars = Object.entries(last7Days).reverse().map(([date, count]) => ({
     value: count,
     label: new Date(date).toLocaleDateString('en-GB', { weekday: 'short' }),
   }));
   setBarData(bars);
 
+   // basic stats
   setTripCount(trips.length);
   setActivityCount(acts.length);
   const mins = acts.reduce((sum, a) => sum + (a.durationMinutes ?? 0), 0);
   setTotalHours(Math.round((mins / 60) * 10) / 10);
 
-  // Pie chart
+  
+  // group activities seperated by category for pie chart
   const grouped: Record<number, number> = {};
   for (const a of acts) {
     grouped[a.categoryId] = (grouped[a.categoryId] ?? 0) + 1;
@@ -185,7 +204,7 @@ export default function InsightsScreen() {
   });
   setPieData(slices);
 
-  // Streak
+  // calculate current streak of active days
   const uniqueDates = [...new Set(acts.map(a => a.date))]
     .sort((a, b) => new Date(b).getTime() - new Date(a).getTime());
   const today = new Date();
@@ -204,18 +223,21 @@ export default function InsightsScreen() {
   setStreak(streakCount);
 }
 
+// reload data 
 useFocusEffect(
   useCallback(() => {
     load();
   }, [])
 );
 
+// export activities to CSV and share it
 async function handleExport() {
   const token = await AsyncStorage.getItem('sessionToken');
   if (!token) { Alert.alert('Error', 'Not logged in'); return; }
   const [user] = await db.select().from(usersTable).where(eq(usersTable.sessionToken, token));
   if (!user) { Alert.alert('Error', 'User not found'); return; }
 
+  // get activities with category names
   const acts = await db
     .select({
       name: activitiesTable.name,
@@ -228,14 +250,17 @@ async function handleExport() {
     .leftJoin(categoriesTable, eq(activitiesTable.categoryId, categoriesTable.id))
     .where(eq(activitiesTable.userId, user.id));
 
+    // build CSV string
   const header = 'Name,Date,Duration (mins),Category,Notes\n';
   const rows = acts.map(a =>
     `"${a.name}","${a.date}","${a.durationMinutes ?? ''}","${a.categoryName ?? ''}","${a.notes ?? ''}"`
   ).join('\n');
 
+  // save file locally
   const path = (FileSystem as any).documentDirectory + 'tripplanner-export.csv';
   await FileSystem.writeAsStringAsync(path, header + rows, { encoding: 'utf8' });
 
+  // share file if possible
   const canShare = await Sharing.isAvailableAsync();
   if (canShare) {
     await Sharing.shareAsync(path, { mimeType: 'text/csv', dialogTitle: 'Export your activities' });
@@ -249,7 +274,7 @@ async function handleExport() {
         <Text style={styles.title}>Insights</Text>
         <Text style={styles.subtitle}>Your travel journey so far...</Text>
 
-        
+        {/* main stats */}
         <View style={styles.statsRow}>
           <View style={[styles.statCard, { flex: 1 }]}>
             <Text style={styles.statLabel}>Trips</Text>
@@ -268,6 +293,7 @@ async function handleExport() {
           </View>
         </View>
 
+        {/* current streak */}
         <View style={[styles.streakCard, streak > 0 && styles.streakCardActive]}>
   <Ionicons name="flame-outline" size={28} color={colours.primary} />
   <View>
@@ -278,7 +304,7 @@ async function handleExport() {
   </View>
 </View>
 
-        
+ {/* category breakdown */}       
 <View style={styles.card}>
   <Text style={styles.cardLabel}>Activities by Category</Text>
 
@@ -315,6 +341,7 @@ async function handleExport() {
     </>
   )}
 
+  {/* export data  form trips*/}
   <TouchableOpacity
     style={styles.exportBtn}
     onPress={handleExport}

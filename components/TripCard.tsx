@@ -16,6 +16,7 @@ type Props = {
   onPress: () => void;
 };
 
+// card showing a single trip
 export default function TripCard({ trip, onPress }: Props) {
   const { colours } = useTheme(); 
 
@@ -82,22 +83,26 @@ export default function TripCard({ trip, onPress }: Props) {
     >
       <View style={[styles.accent, { backgroundColor: trip.coverColour }]} />
 
+    {/* trip details */}
       <View style={styles.body}>
         <Text style={styles.name}>{trip.name}</Text>
 
+      {/* destination */}
         <View style={styles.row}>
           <Ionicons name="location-outline" size={14} color={colours.textSecondary} />
           <Text style={styles.destination}>{trip.destination}</Text>
         </View>
 
+      {/* dates */}
         <View style={styles.row}>
           <Ionicons name="calendar-outline" size={12} color={colours.textMuted} />
           <Text style={styles.dates}>
-            {trip.startDate} → {trip.endDate}
+            {trip.startDate}  → {trip.endDate}
           </Text>
         </View>
       </View>
 
+      {/* arrow icon */}
       <Ionicons
         name="chevron-forward"
         size={20}

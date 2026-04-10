@@ -13,6 +13,21 @@ import {
   View,
 } from 'react-native';
 
+// check if date is valid (YYYY-MM-DD)
+function isValidDate(date: string) {
+  const regex = /^\d{4}-\d{2}-\d{2}$/;
+  if (!regex.test(date)) return false;
+
+  const [year, month, day] = date.split('-').map(Number);
+  const d = new Date(year, month - 1, day);
+
+  return (
+    d.getFullYear() === year &&
+    d.getMonth() === month - 1 &&
+    d.getDate() === day
+  );
+}
+
 type Category = { id: number; name: string; colour: string; icon: string };
 
 export default function EditActivityScreen() {
@@ -46,10 +61,14 @@ export default function EditActivityScreen() {
 
   useEffect(() => {
     async function load() {
+      // load categories
       const cats = await db.select().from(categoriesTable);
       setCategories(cats);
+      // load activity details
       const [act] = await db.select().from(activitiesTable)
         .where(eq(activitiesTable.id, Number(activityId)));
+
+        // fill form with existing data
       if (act) {
         setName(act.name);
         setDate(act.date);
@@ -61,11 +80,17 @@ export default function EditActivityScreen() {
     load();
   }, [activityId]);
 
+  // save changes to activity
   async function handleSave() {
     if (!name.trim() || !date || !selectedCat) {
       Alert.alert('Missing fields', 'Please fill in name, date and category.');
       return;
     }
+     // validate date
+  if (!isValidDate(date)) {
+    Alert.alert('Invalid date', 'Use format YYYY-MM-DD (e.g. 2026-06-12)');
+    return;
+  }
     await db.update(activitiesTable).set({
       name: name.trim(), date,
       durationMinutes: duration ? Number(duration) : null,
@@ -75,6 +100,7 @@ export default function EditActivityScreen() {
     router.back();
   }
 
+  // delete activity
   async function handleDelete() {
     Alert.alert('Delete activity', 'Are you sure?', [
       { text: 'Cancel', style: 'cancel' },
@@ -88,6 +114,7 @@ export default function EditActivityScreen() {
   return (
     <SafeAreaView style={styles.safe}>
       <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
+        {/* header with cancel and save */}
         <View style={styles.header}>
           <TouchableOpacity onPress={() => router.back()}>
             <Text style={styles.cancel}>Cancel</Text>
@@ -102,10 +129,12 @@ export default function EditActivityScreen() {
           <Text style={styles.label}>Activity name</Text>
           <TextInput style={styles.input} value={name} onChangeText={setName} accessibilityLabel="Activity name" />
         </View>
+        {/* date */}
         <View style={styles.field}>
           <Text style={styles.label}>Date (YYYY-MM-DD)</Text>
           <TextInput style={styles.input} value={date} onChangeText={setDate} keyboardType="numeric" accessibilityLabel="Date" />
         </View>
+        {/* category selection */}
         <View style={styles.field}>
           <Text style={styles.label}>Category</Text>
           <View style={styles.catRow}>
@@ -127,6 +156,7 @@ export default function EditActivityScreen() {
             ))}
           </View>
         </View>
+        {/* duration */}
         <View style={styles.field}>
           <Text style={styles.label}>Duration (minutes)</Text>
           <TextInput style={styles.input} value={duration} onChangeText={setDuration} keyboardType="numeric" accessibilityLabel="Duration" />
@@ -135,10 +165,18 @@ export default function EditActivityScreen() {
           <Text style={styles.label}>Notes (optional)</Text>
           <TextInput style={[styles.input, styles.textarea]} value={notes} onChangeText={setNotes} multiline numberOfLines={3} accessibilityLabel="Notes" />
         </View>
-
-        <TouchableOpacity style={styles.deleteBtn} onPress={handleDelete} accessibilityRole="button" accessibilityLabel="Delete activity">
-          <Text style={styles.deleteBtnText}>Delete Activity</Text>
-        </TouchableOpacity>
+            {/* delete button */}
+        <TouchableOpacity
+          style={styles.deleteBtn}
+          onPress={handleDelete}
+          accessibilityRole="button"
+          accessibilityLabel="Delete activity"
+        >
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+            <Ionicons name="trash-outline" size={18} color="#7F1D1D" />
+            <Text style={styles.deleteBtnText}>Delete Activity</Text>
+          </View>
+</TouchableOpacity>
       </ScrollView>
     </SafeAreaView>
   );
