@@ -99,6 +99,7 @@ const MOCK_TRIPS = [
     createdAt: '2024-09-01T00:00:00.000Z',
   },
 ];
+
 // mock database
 jest.mock('@/db/client', () => ({
   db: {
@@ -116,7 +117,6 @@ jest.mock('@/db/schema', () => ({
   targetsTable:    {},
   usersTable:      {},
 }));
-
 
 jest.mock('drizzle-orm', () => ({
   like: jest.fn(),
@@ -141,36 +141,46 @@ jest.mock('@/components/TripCard', () => {
   );
 });
 
+// mock EmptyState
 jest.mock('@/components/EmptyState', () => {
   const { Text } = require('react-native');
   return () => <Text testID="empty-state">No trips yet</Text>;
 });
 
-
 import TripsScreen from '@/app/(tabs)/index';
 import { db } from '@/db/client';
-
 
 describe('TripsScreen – integration tests', () => {
 
   beforeEach(() => {
-    // reset mocks before each test
-    jest.clearAllMocks();
-    
-// default DB response
-    (db.select as jest.Mock).mockReturnValue({
-      from: jest.fn().mockReturnValue({
+  jest.clearAllMocks();
+
+  (db.select as jest.Mock).mockImplementation(() => ({
+    from: jest.fn().mockImplementation((table) => {
+
+      // 👇 USER QUERY (no orderBy after this)
+      if (table && table !== undefined && table !== null && Object.keys(table).length === 0) {
+        return {
+          where: jest.fn().mockResolvedValue([{ id: 1 }]),
+        };
+      }
+
+      // 👇 TRIPS QUERY (has orderBy chain)
+      return {
         where: jest.fn().mockReturnValue({
           orderBy: jest.fn().mockResolvedValue(MOCK_TRIPS),
         }),
         orderBy: jest.fn().mockResolvedValue(MOCK_TRIPS),
-      }),
-    });
-  });
+      };
+    }),
+  }));
+});
 
   test('renders the screen heading', async () => {
     const { getByText } = render(<TripsScreen />);
-    expect(getByText('My Trips')).toBeTruthy();
+    await waitFor(() => {
+      expect(getByText('Your Trips')).toBeTruthy();
+    });
   });
 
   test('renders trip cards after DB loads', async () => {
@@ -188,24 +198,40 @@ describe('TripsScreen – integration tests', () => {
     });
   });
 
-  test('shows the Add Trip button', async () => {
+  test('shows the Add Trip button', () => {
     const { getByText } = render(<TripsScreen />);
     expect(getByText('+ New Trip')).toBeTruthy();
   });
 
   test('shows empty state when DB returns no trips', async () => {
-    (db.select as jest.Mock).mockReturnValue({
-      from: jest.fn().mockReturnValue({
-        where: jest.fn().mockReturnValue({
-          orderBy: jest.fn().mockResolvedValue([]),
-        }),
+
+    // override DB to return empty
+    (db.select as jest.Mock).mockImplementation(() => ({
+  from: jest.fn().mockImplementation((table) => {
+
+    // user query
+    if (table && Object.keys(table).length === 0) {
+      return {
+        where: jest.fn().mockResolvedValue([{ id: 1 }]),
+      };
+    }
+
+    // trips query (empty)
+    return {
+      where: jest.fn().mockReturnValue({
         orderBy: jest.fn().mockResolvedValue([]),
       }),
-    });
+      orderBy: jest.fn().mockResolvedValue([]),
+    };
+  }),
+}));
 
+   
     const { getByTestId } = render(<TripsScreen />);
+
     await waitFor(() => {
       expect(getByTestId('empty-state')).toBeTruthy();
     });
   });
+
 });

@@ -32,29 +32,43 @@ export default function TripsScreen() {
 
 const filteredTrips = trips
   .filter(t =>
-    search ? t.name.toLowerCase().includes(search.toLowerCase()) : true
+    search
+      ? t.name.toLowerCase().includes(search.toLowerCase())
+      : true
   )
   .filter(t => {
     let tripStart = t.startDate;
     let tripEnd = t.endDate;
 
-    
     if (dateFrom) {
       const len = dateFrom.length;
       tripEnd = tripEnd.slice(0, len);
-
       if (tripEnd < dateFrom) return false;
     }
 
     if (dateTo) {
       const len = dateTo.length;
       tripStart = tripStart.slice(0, len);
-
       if (tripStart > dateTo) return false;
     }
 
     return true;
   });
+
+  const suggestions = trips.filter(t => {
+  if (!search || search.length < 2) return false;
+
+  const q = search.toLowerCase();
+  const short = q.slice(0, 2);
+
+  return (
+    t.name.toLowerCase().includes(q) ||
+    t.destination.toLowerCase().includes(q) ||
+    t.name.toLowerCase().includes(short) ||
+    t.destination.toLowerCase().includes(short)
+  );
+});
+
 
   const styles = StyleSheet.create({
     safe: {
@@ -177,9 +191,8 @@ setLoading(false);
 
   // update search text and reload results
   function handleSearch(text: string) {
-    setSearch(text);
-    loadTrips(text);
-  }
+  setSearch(text);
+}
 
   // clear search and reload everything
   function clearSearch() {
@@ -232,6 +245,39 @@ setLoading(false);
         )}
       </View>
 
+      {search.length > 0 && suggestions.length > 0 && (
+  <View style={{ marginHorizontal: 20, marginBottom: 10 }}>
+    <Text style={{ color: colours.textSecondary, marginBottom: 6 }}>
+      Did you mean:
+    </Text>
+
+    {suggestions.slice(0, 2).map((s) => (
+      <TouchableOpacity
+        key={s.id}
+        onPress={() => handleSearch(s.name)}
+        style={{ paddingVertical: 6 }}
+      >
+        <TouchableOpacity
+  key={s.id}
+  onPress={() => handleSearch(s.name)}
+  style={{
+    backgroundColor: colours.surface,
+    padding: 12,
+    borderRadius: 10,
+    marginBottom: 6,
+    borderWidth: 1,
+    borderColor: colours.border,
+  }}
+>
+  <Text style={{ color: colours.textPrimary, fontWeight: '600' }}>
+    {s.name}
+  </Text>
+</TouchableOpacity>
+      </TouchableOpacity>
+    ))}
+  </View>
+)}
+
           <View style={{ flexDirection: 'row', gap: 8, marginHorizontal: 20, marginBottom: 10 }}>
       <TextInput
           style={styles.searchInput}
@@ -253,23 +299,26 @@ setLoading(false);
     />
     </View>
 
-      {/* results */}
-      {loading ? (
-        <View style={styles.center}>
-          <Text style={styles.loadingText}>Loading...</Text>
-        </View>
-      ) :filteredTrips.length === 0 ? (
+      
+ {/* results */}
+{loading ? (
+  <View style={styles.center}>
+    <Text style={styles.loadingText}>Loading...</Text>
+  </View>
 
-        // nothing found
-  (search.length > 0 || dateFrom || dateTo) ? (
-    <EmptyState
-      iconName="map-outline"
-      iconLib="Ionicons"
-      title={`No trips match "${search}"`}
-      subtitle="Try a different destination or trip name"
-      actionLabel="Clear search"
-      onAction={clearSearch}
-    />
+) : filteredTrips.length === 0 ? (
+
+  search.length > 0 || dateFrom || dateTo ? (
+    <View style={{ flex: 1, paddingHorizontal: 20, justifyContent: 'center' }}>
+      <EmptyState
+        iconName="map-outline"
+        iconLib="Ionicons"
+        title={`No trips match "${search}"`}
+        subtitle="Try a different destination or trip name"
+        actionLabel="Clear search"
+        onAction={clearSearch}
+      />
+    </View>
   ) : (
     <EmptyState
       iconName="map-outline"
@@ -280,20 +329,23 @@ setLoading(false);
       onAction={() => router.push('/add-trip')}
     />
   )
-) : (   
-  // list of trips
-        <FlatList
-          data={filteredTrips}
-          keyExtractor={(item) => item.id.toString()}
-          contentContainerStyle={styles.list}
-          renderItem={({ item }) => (
-            <TripCard
-              trip={item}
-              onPress={() => router.push(`/trip/${item.id}`)}
-            />
-          )}
-        />
-      )}
+
+) : (
+
+  <FlatList
+    data={filteredTrips}
+    keyExtractor={(item) => item.id.toString()}
+    contentContainerStyle={styles.list}
+    renderItem={({ item }) => (
+      <TripCard
+        trip={item}
+        onPress={() => router.push(`/trip/${item.id}`)}
+      />
+    )}
+  />
+
+)}
+
     </SafeAreaView>
   );
 }
