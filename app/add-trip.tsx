@@ -111,7 +111,18 @@ if (!userId) {
       Alert.alert('Error', 'User not logged in');
       return;
     }
+// check for overlapping trips
+const existingTrips = await db.select().from(tripsTable).where(eq(tripsTable.userId, userId));
 
+const hasOverlap = existingTrips.some(t => startDate <= t.endDate && endDate >= t.startDate);
+
+if (hasOverlap) {
+  Alert.alert(
+    'Date conflict',
+    'You already have a trip during those dates. Please choose different dates.'
+  );
+  return;
+}
      // save trip to database
     await db.insert(tripsTable).values({
       name: name.trim(),

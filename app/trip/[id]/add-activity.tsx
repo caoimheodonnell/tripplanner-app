@@ -1,6 +1,6 @@
 import { useTheme } from '@/context/ThemeContext';
 import { db } from '@/db/client';
-import { activitiesTable, categoriesTable, usersTable } from '@/db/schema';
+import { activitiesTable, categoriesTable, tripsTable, usersTable } from '@/db/schema';
 import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { eq } from 'drizzle-orm';
@@ -41,6 +41,7 @@ export default function AddActivityScreen() {
   const [categories, setCategories] = useState<Category[]>([]);
   const [selectedCat, setSelectedCat] = useState<number | null>(null);
   const { colours } = useTheme();
+  const [trip, setTrip] = useState<{ startDate: string; endDate: string } | null>(null);
 
   const styles = StyleSheet.create({
   safe:    { flex: 1, backgroundColor: colours.background },
@@ -88,9 +89,14 @@ categoryText: {
       const cats = await db.select().from(categoriesTable);
       setCategories(cats);
       if (cats.length > 0) setSelectedCat(cats[0].id);
+
+      const [tripRow] = await db.select().from(tripsTable).where(eq(tripsTable.id, Number(id)));
+setTrip(tripRow ?? null);
     }
     load();
   }, []);
+
+  
 
  // save activity
 async function handleSave() {
@@ -104,6 +110,14 @@ async function handleSave() {
     Alert.alert('Invalid date', 'Use format YYYY-MM-DD (e.g. 2026-06-12)');
     return;
   }
+
+  if (trip && (date < trip.startDate || date > trip.endDate)) {
+  Alert.alert(
+    'Outside trip dates',
+    `This trip runs from ${trip.startDate} to ${trip.endDate}. Your activity date must be within that range.`
+  );
+  return;
+}
 
   // get logged in user
   const token = await AsyncStorage.getItem('sessionToken');

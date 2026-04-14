@@ -16,9 +16,24 @@ type Props = {
   onPress: () => void;
 };
 
+// work out if trip is upcoming active or past
+function getTripStatus(startDate: string, endDate: string) {
+  const today = new Date().toISOString().split('T')[0];
+  if (today < startDate) return 'Upcoming';
+  if (today > endDate) return 'Past';
+  return 'Active';
+}
+
 // card showing a single trip
 export default function TripCard({ trip, onPress }: Props) {
-  const { colours } = useTheme(); 
+  const { colours } = useTheme();
+  const status = getTripStatus(trip.startDate, trip.endDate);
+
+  // pill colour based on status
+  const pillColour =
+    status === 'Active'   ? '#22C55E' :
+    status === 'Upcoming' ? colours.primary :
+    colours.textMuted;
 
   const styles = StyleSheet.create({
     card: {
@@ -72,6 +87,22 @@ export default function TripCard({ trip, onPress }: Props) {
       alignItems: 'center',
       gap: 4,
     },
+
+    // status pill styles
+    statusPill: {
+      alignSelf: 'flex-start',
+      paddingHorizontal: 8,
+      paddingVertical: 2,
+      borderRadius: 999,
+      marginTop: 6,
+    },
+
+    statusText: {
+      fontSize: 10,
+      fontWeight: '700',
+      textTransform: 'uppercase',
+      letterSpacing: 0.5,
+    },
   });
 
   return (
@@ -83,21 +114,28 @@ export default function TripCard({ trip, onPress }: Props) {
     >
       <View style={[styles.accent, { backgroundColor: trip.coverColour }]} />
 
-    {/* trip details */}
+      {/* trip details */}
       <View style={styles.body}>
         <Text style={styles.name}>{trip.name}</Text>
 
-      {/* destination */}
+        {/* destination */}
         <View style={styles.row}>
           <Ionicons name="location-outline" size={14} color={colours.textSecondary} />
           <Text style={styles.destination}>{trip.destination}</Text>
         </View>
 
-      {/* dates */}
+        {/* dates */}
         <View style={styles.row}>
           <Ionicons name="calendar-outline" size={12} color={colours.textMuted} />
           <Text style={styles.dates}>
             {trip.startDate}  → {trip.endDate}
+          </Text>
+        </View>
+
+        {/* status badge */}
+        <View style={[styles.statusPill, { backgroundColor: pillColour + '22' }]}>
+          <Text style={[styles.statusText, { color: pillColour }]}>
+            {status}
           </Text>
         </View>
       </View>
