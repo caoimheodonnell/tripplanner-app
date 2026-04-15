@@ -4,16 +4,16 @@ import { Tabs } from 'expo-router';
 import { Text } from 'react-native';
 
 export default function TabLayout() {
-  // Get colours from the theme so everything matches
+  // get colours from the theme so everything matches
   const { colours } = useTheme();
   return (
     <Tabs
       screenOptions={{
         headerShown: false,
-        // Colours for the tab icons/text
+        // colours for the tab icons/text
         tabBarActiveTintColor: colours.primary,
         tabBarInactiveTintColor: colours.textMuted,
-        // Background and border of the tab bar
+        // background and border of the tab bar
         tabBarStyle: {
           backgroundColor: colours.surface,
           borderTopColor: colours.border,
@@ -25,7 +25,7 @@ export default function TabLayout() {
         },
       }}
     >
-       {/* Main home screen */}
+       {/* main home screen */}
      <Tabs.Screen
   name="index"
   options={{
@@ -36,7 +36,7 @@ export default function TabLayout() {
   }}
 />
 
-{/* User profile page */}
+{/* user profile page */}
 <Tabs.Screen
   name="profile"
   options={{
@@ -46,7 +46,7 @@ export default function TabLayout() {
     ),
   }}
 />
-{/* Stats and insights screen */}
+{/* stats and insights screen */}
 <Tabs.Screen
   name="insights"
   options={{
@@ -56,7 +56,7 @@ export default function TabLayout() {
     ),
   }}
 />
-      {/* Where items are grouped into categories */}
+      {/* where items are grouped into categories */}
       <Tabs.Screen
   name="categories"
   options={{

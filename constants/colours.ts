@@ -24,5 +24,5 @@ export const darkColours = {
   success:       '#22C55E',
 };
 
-// Default export for any files not yet on dark mode
+// Default for any files not yet on dark mode
 export const colours = lightColours;

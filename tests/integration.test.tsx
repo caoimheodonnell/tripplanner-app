@@ -158,14 +158,14 @@ describe('TripsScreen – integration tests', () => {
   (db.select as jest.Mock).mockImplementation(() => ({
     from: jest.fn().mockImplementation((table) => {
 
-      // 👇 USER QUERY (no orderBy after this)
+      // user query 
       if (table && table !== undefined && table !== null && Object.keys(table).length === 0) {
         return {
           where: jest.fn().mockResolvedValue([{ id: 1 }]),
         };
       }
 
-      // 👇 TRIPS QUERY (has orderBy chain)
+      // trips query
       return {
         where: jest.fn().mockReturnValue({
           orderBy: jest.fn().mockResolvedValue(MOCK_TRIPS),
@@ -216,7 +216,7 @@ describe('TripsScreen – integration tests', () => {
       };
     }
 
-    // trips query (empty)
+    // trips query 
     return {
       where: jest.fn().mockReturnValue({
         orderBy: jest.fn().mockResolvedValue([]),

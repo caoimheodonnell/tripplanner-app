@@ -300,7 +300,7 @@ export default function CategoriesScreen() {
 </View>
             <TouchableOpacity
   onPress={(e) => {
-    e.stopPropagation(); // stops triggering edit
+    e.stopPropagation(); 
     deleteCategory(item.id);
   }}
 >

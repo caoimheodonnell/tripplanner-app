@@ -306,11 +306,11 @@ async function handleDeleteAccount() {
             .where(eq(usersTable.sessionToken, token));
 
           if (user) {
-            await db.delete(usersTable).where(eq(usersTable.id, user.id)); // delete user
+            await db.delete(usersTable).where(eq(usersTable.id, user.id)); 
           }
         }
 
-        await AsyncStorage.removeItem('sessionToken'); // clear local
+        await AsyncStorage.removeItem('sessionToken'); 
         router.replace('/login' as any);
       },
     },
@@ -359,7 +359,7 @@ async function handleDeleteAccount() {
 </View>
 
 
-        {/*Targets*/}
+        {/*targets*/}
         <View style={styles.sectionRow}>
           <Text style={styles.sectionHeader}>Targets</Text>
           <TouchableOpacity onPress={() => {
@@ -372,7 +372,7 @@ async function handleDeleteAccount() {
           </TouchableOpacity>
         </View>
 
-        {/* Add and Edit form */}
+        {/* add and edit form */}
         {showForm && (
           <View style={styles.form}>
             <Text style={styles.inputLabel}>Label</Text>
@@ -464,7 +464,7 @@ async function handleDeleteAccount() {
           </View>
         )}
 
-        {/* Target cards */}
+        {/* target cards */}
         {targets.length === 0 && !showForm && (
         <EmptyState
           title="No targets set"
@@ -504,7 +504,7 @@ async function handleDeleteAccount() {
           );
         })}
 
-        {/* Reminders */}
+        {/* reminders */}
         <Text style={styles.sectionHeader}>Reminders</Text>
         <View style={styles.card}>
           <View style={styles.notifRow}>

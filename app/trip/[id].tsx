@@ -304,7 +304,7 @@ pillTextSelected: {
   setDateTo('');
 }
 
-// apply filters - categroy and date 
+// apply filters for  categroy and date 
   const filtered = activities
     .filter(a => selectedCategory ? a.categoryId === selectedCategory : true)
     .filter(a => dateFrom ? a.date >= dateFrom : true)
@@ -367,19 +367,19 @@ pillTextSelected: {
            </View>
 
            {/* notes section */}
-{trip.notes && (
-  <View style={{ marginTop: 10 }}>
-    <Text style={{ color: '#fff', fontSize: 11, opacity: 0.7 }}>
-      Notes
-    </Text>
-    <Text style={{ color: '#fff', fontSize: 13 }}>
-      {trip.notes}
-    </Text>
-  </View>
-)}
-      </View>
+          {trip.notes && (
+            <View style={{ marginTop: 10 }}>
+              <Text style={{ color: '#fff', fontSize: 11, opacity: 0.7 }}>
+                Notes
+              </Text>
+              <Text style={{ color: '#fff', fontSize: 13 }}>
+                {trip.notes}
+              </Text>
+            </View>
+          )}
+                </View>
 
-{/* Wweather info */}
+{/* weather info */}
 <View style={styles.weatherCard}>
   <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
   <Ionicons
@@ -441,7 +441,7 @@ pillTextSelected: {
         />
       </View>
 
-      {/* Categories */}
+      {/* categories */}
       <View style={styles.pillContainer}>
         <TouchableOpacity
           onPress={() => setSelectedCategory(null)}
@@ -531,17 +531,17 @@ pillTextSelected: {
                   </Text>
 
                   {item.notes && (
-  <Text
-    style={{
-      fontSize: 12,
-      color: colours.textMuted,
-      marginTop: 4,
-    }}
-    numberOfLines={2}
-  >
-    {item.notes}
-  </Text>
-)}
+                <Text
+                  style={{
+                    fontSize: 12,
+                    color: colours.textMuted,
+                    marginTop: 4,
+                  }}
+                  numberOfLines={2}
+                >
+                  {item.notes}
+                </Text>
+              )}
                 </View>
 
                 <Ionicons

@@ -4,7 +4,7 @@
     "slug": "TripPlanner",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/images/icon.png",
+    "icon": "./assets/images/Trip Planner.png",
     "scheme": "tripplanner",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
@@ -45,6 +45,19 @@
     "experiments": {
       "typedRoutes": true,
       "reactCompiler": true
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "5b5efba5-c4ac-4d58-b33b-ed9c4b3adb4c"
+      }
+    },
+    "owner": "caoimheodonnell",
+    "runtimeVersion": {
+      "policy": "appVersion"
+    },
+    "updates": {
+      "url": "https://u.expo.dev/5b5efba5-c4ac-4d58-b33b-ed9c4b3adb4c"
     }
   }
 }
