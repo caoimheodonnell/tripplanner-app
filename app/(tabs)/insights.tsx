@@ -156,7 +156,7 @@ export default function InsightsScreen() {
   const acts  = await db.select().from(activitiesTable).where(eq(activitiesTable.userId, userId));
   const cats  = await db.select().from(categoriesTable);
 
-  // Bar chart with last 7 days
+  // bar chart with last 7 days
   const last7Days: Record<string, number> = {};
   for (let i = 0; i < 7; i++) {
   const d = new Date();
@@ -250,7 +250,7 @@ async function handleExport() {
     .leftJoin(categoriesTable, eq(activitiesTable.categoryId, categoriesTable.id))
     .where(eq(activitiesTable.userId, user.id));
 
-    // build CSV string
+    // build CSV export string
   const header = 'Name,Date,Duration (mins),Category,Notes\n';
   const rows = acts.map(a =>
     `"${a.name}","${a.date}","${a.durationMinutes ?? ''}","${a.categoryName ?? ''}","${a.notes ?? ''}"`

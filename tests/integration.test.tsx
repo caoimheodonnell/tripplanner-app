@@ -8,7 +8,7 @@ jest.mock('@react-native-async-storage/async-storage', () => ({
   removeItem: jest.fn().mockResolvedValue(undefined),
 }));
 
-// mock theme so styles don’t break
+// mock theme so styles dont break
 jest.mock('@/context/ThemeContext', () => ({
   useTheme: () => ({
     isDark: false,

@@ -215,7 +215,7 @@ await db.insert(usersTable).values({
           </TouchableOpacity>
         </View>
 
-        {/* name field - register only */}
+        {/* name input - register only */}
         {mode === 'register' && (
           <View style={styles.field}>
             <Text style={styles.label}>Name</Text>

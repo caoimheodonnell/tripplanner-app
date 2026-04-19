@@ -6,7 +6,7 @@ export type WeatherData = {
   country: string;
 };
 
-// fetch current weather for a city
+// get current weather for a city
 export async function fetchWeather(city: string): Promise<WeatherData> {
   // get API key
   const key = process.env.EXPO_PUBLIC_WEATHER_API_KEY;

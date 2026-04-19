@@ -58,11 +58,11 @@ export default function TabLayout() {
 />
       {/* where items are grouped into categories */}
       <Tabs.Screen
-  name="categories"
-  options={{
-    title: 'Categories',
-    tabBarIcon: ({ color }) => (
-      <Ionicons name="grid-outline" size={22} color={color} />
+      name="categories"
+      options={{
+        title: 'Categories',
+        tabBarIcon: ({ color }) => (
+          <Ionicons name="grid-outline" size={22} color={color} />
     ),
   }}
 />

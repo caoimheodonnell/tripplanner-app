@@ -1,7 +1,7 @@
 import { useTheme } from '@/context/ThemeContext';
 import { db } from '@/db/client';
 import { activitiesTable, categoriesTable, tripsTable, usersTable } from '@/db/schema';
-import { Ionicons } from '@expo/vector-icons';
+import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { eq } from 'drizzle-orm';
 import { useLocalSearchParams, useRouter } from 'expo-router';
@@ -14,6 +14,21 @@ import {
   View,
 } from 'react-native';
 
+const ICON_OPTIONS = [
+  { name: 'map-outline', lib: 'Ionicons' },
+  { name: 'bank', lib: 'MaterialCommunityIcons' },
+  { name: 'hiking', lib: 'MaterialCommunityIcons' },
+  { name: 'restaurant-outline', lib: 'Ionicons' },
+  { name: 'airplane-outline', lib: 'Ionicons' },
+  { name: 'beach', lib: 'MaterialCommunityIcons' },
+  { name: 'theater', lib: 'MaterialCommunityIcons' },
+  { name: 'cart-outline', lib: 'Ionicons' },
+  { name: 'sail-boat', lib: 'MaterialCommunityIcons' },
+  { name: 'image-outline', lib: 'Ionicons' },
+  { name: 'camera-outline', lib: 'Ionicons' },
+  { name: 'musical-notes-outline', lib: 'Ionicons' },
+];
+ 
 // check if date is valid (YYYY-MM-DD)
 function isValidDate(date: string) {
   const regex = /^\d{4}-\d{2}-\d{2}$/;
@@ -202,20 +217,23 @@ async function handleSave() {
         ]}
       >
         <View style={styles.categoryContent}>
-          <Ionicons
-            name={cat.icon as any}
-            size={16}
-            color={selected ? '#fff' : colours.textPrimary}
-          />
-          <Text
-            style={[
-              styles.categoryText,
-              selected && { color: '#fff' },
-            ]}
-          >
-            {cat.name}
-          </Text>
-        </View>
+  {ICON_OPTIONS.find(i => i.name === cat.icon)?.lib === 'MaterialCommunityIcons' ? (
+    <MaterialCommunityIcons
+      name={cat.icon as any}
+      size={16}
+      color={selected ? '#fff' : colours.textPrimary}
+    />
+  ) : (
+    <Ionicons
+      name={cat.icon as any}
+      size={16}
+      color={selected ? '#fff' : colours.textPrimary}
+    />
+  )}
+  <Text style={[styles.categoryText, selected && { color: '#fff' }]}>
+    {cat.name}
+  </Text>
+</View>
       </TouchableOpacity>
     );
   })}

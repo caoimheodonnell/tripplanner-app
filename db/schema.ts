@@ -34,7 +34,7 @@ export const activitiesTable = sqliteTable('activities', {
   createdAt: text('created_at').notNull(),
 });
 
-// user  targets (weekly or monthly)
+// user  targets 
 export const targetsTable = sqliteTable('targets', {
   id: integer('id').primaryKey({ autoIncrement: true }),
   label: text('label').notNull(),

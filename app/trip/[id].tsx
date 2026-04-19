@@ -15,7 +15,7 @@ import {
   Text,
   TextInput,
   TouchableOpacity,
-  View,
+  View
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
@@ -121,6 +121,7 @@ const [weatherError, setWeatherError]   = useState('');
 
     pillContainer: {
       flexDirection: 'row',
+      flexWrap: 'wrap',
       padding: 20,
       gap: 8,
     },
@@ -442,45 +443,35 @@ pillTextSelected: {
       </View>
 
       {/* categories */}
-      <View style={styles.pillContainer}>
-        <TouchableOpacity
-          onPress={() => setSelectedCategory(null)}
-          style={[styles.pill, !selectedCategory && styles.pillSelected]}
-        >
-          <Text
-  style={[
-    styles.pillText,
-    !selectedCategory && styles.pillTextSelected
-  ]}
->
-  All
-</Text>
-        </TouchableOpacity>
-
-        {uniqueCategories.map(cat => (
+    {/* categories */}
+<View style={styles.pillContainer}>
   <TouchableOpacity
-    key={cat.id}
-    onPress={() => setSelectedCategory(cat.id)}
-    style={[
-      styles.pill,
-      selectedCategory === cat.id && {
-        backgroundColor: cat.colour,
-        borderColor: cat.colour,
-      },
-    ]}
+    onPress={() => setSelectedCategory(null)}
+    style={[styles.pill, !selectedCategory && styles.pillSelected]}
   >
-    <Text
-      style={[
-        styles.pillText,
-        selectedCategory === cat.id && styles.pillTextSelected,
-      ]}
-    >
-      {cat.name}
+    <Text style={[styles.pillText, !selectedCategory && styles.pillTextSelected]}>
+      All
     </Text>
   </TouchableOpacity>
-))}
-      </View>
 
+  {uniqueCategories.map(cat => (
+    <TouchableOpacity
+      key={cat.id}
+      onPress={() => setSelectedCategory(cat.id)}
+      style={[
+        styles.pill,
+        selectedCategory === cat.id && {
+          backgroundColor: cat.colour,
+          borderColor: cat.colour,
+        },
+      ]}
+    >
+      <Text style={[styles.pillText, selectedCategory === cat.id && styles.pillTextSelected]}>
+        {cat.name}
+      </Text>
+    </TouchableOpacity>
+  ))}
+</View>
       {/* empty state or activity list */}
       {filtered.length === 0 ? (
         <EmptyState
