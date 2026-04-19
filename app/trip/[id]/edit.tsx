@@ -6,10 +6,11 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
 import {
   Alert,
+  KeyboardAvoidingView, Platform,
   SafeAreaView, ScrollView,
   StyleSheet,
   Text, TextInput, TouchableOpacity,
-  View,
+  View
 } from 'react-native';
 
 function isValidDate(date: string) {
@@ -100,6 +101,11 @@ export default function EditTripScreen() {
 
   return (
     <SafeAreaView style={styles.safe}>
+      <KeyboardAvoidingView
+    style={{ flex: 1 }}
+    behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+    keyboardVerticalOffset={80}
+  >
       <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
         {/* header with cancel and save */}
         <View style={styles.header}>
@@ -125,18 +131,19 @@ export default function EditTripScreen() {
         {/* start date */}
         <View style={styles.field}>
           <Text style={styles.label}>Start date (YYYY-MM-DD) <Text style={{color: colours.error}}>*</Text></Text>
-          <TextInput style={styles.input} value={startDate} onChangeText={setStartDate} keyboardType="numeric" accessibilityLabel="Start date" />
+          <TextInput style={styles.input} value={startDate} onChangeText={setStartDate} accessibilityLabel="Start date" />
         </View>
         {/* end date */}
         <View style={styles.field}>
           <Text style={styles.label}>End date (YYYY-MM-DD) <Text style={{color: colours.error}}>*</Text></Text>
-          <TextInput style={styles.input} value={endDate} onChangeText={setEndDate} keyboardType="numeric" accessibilityLabel="End date" />
+          <TextInput style={styles.input} value={endDate} onChangeText={setEndDate} accessibilityLabel="End date" />
         </View>
         <View style={styles.field}>
           <Text style={styles.label}>Notes (optional)</Text>
           <TextInput style={[styles.input, styles.textarea]} value={notes} onChangeText={setNotes} multiline numberOfLines={3} accessibilityLabel="Notes" />
         </View>
       </ScrollView>
+      </KeyboardAvoidingView>
     </SafeAreaView>
   );
 }

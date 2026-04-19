@@ -7,10 +7,11 @@ import { useRouter } from 'expo-router';
 import { useState } from 'react';
 import {
   Alert,
+  KeyboardAvoidingView, Platform,
   SafeAreaView, ScrollView,
   StyleSheet,
   Text, TextInput, TouchableOpacity,
-  View,
+  View
 } from 'react-native';
 
 // check if date is valid (YYYY-MM-DD)
@@ -142,6 +143,10 @@ if (hasOverlap) {
 
   return (
     <SafeAreaView style={styles.safe}>
+      <KeyboardAvoidingView
+    style={{ flex: 1 }}
+    behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+  >
       <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
 
         {/* header with cancel and save */}
@@ -187,7 +192,7 @@ if (hasOverlap) {
             placeholderTextColor={colours.textMuted}
             value={startDate}
             onChangeText={setStartDate}
-            keyboardType="numeric"
+      
           />
         </Field>
 
@@ -198,7 +203,6 @@ if (hasOverlap) {
             placeholderTextColor={colours.textMuted}
             value={endDate}
             onChangeText={setEndDate}
-            keyboardType="numeric"
           />
         </Field>
 
@@ -214,6 +218,7 @@ if (hasOverlap) {
         </Field>
 
       </ScrollView>
+      </KeyboardAvoidingView>
     </SafeAreaView>
   );
 }

@@ -7,7 +7,10 @@ import * as Crypto from 'expo-crypto';
 import { useRouter } from 'expo-router';
 import { useState } from 'react';
 import {
-  Alert, Image, SafeAreaView, ScrollView,
+  Alert, Image,
+  KeyboardAvoidingView,
+  Platform,
+  SafeAreaView, ScrollView,
   StyleSheet,
   Text, TextInput, TouchableOpacity,
   View
@@ -119,70 +122,70 @@ export default function LoginScreen() {
     Alert.alert('Missing fields', 'Please enter your email and password.');
     return;
   }
+  try {
+    const [user] = await db.select().from(usersTable)
+      .where(eq(usersTable.email, email.trim().toLowerCase()));
 
-  // find user by email
-  const [user] = await db.select().from(usersTable)
-    .where(eq(usersTable.email, email.trim().toLowerCase()));
+    const hashedPassword = await Crypto.digestStringAsync(
+      Crypto.CryptoDigestAlgorithm.SHA256,
+      password
+    );
 
-  // hash password to compare
-const hashedPassword = await Crypto.digestStringAsync(
-  Crypto.CryptoDigestAlgorithm.SHA256,
-  password
-);
-
-// check login details
-if (!user || user.password !== hashedPassword) {
-    Alert.alert('Login failed', 'Email or password is incorrect.');
-    return;
-  }
-
-   // create random session token
-  const token = Math.random().toString(36).slice(2) + Date.now().toString(36);
-
-  // save token to user in database
-  await db.update(usersTable)
-    .set({ sessionToken: token })
-    .where(eq(usersTable.id, user.id));
-
-  // store token locally
-  await AsyncStorage.setItem('sessionToken', token);
-  router.replace('/(tabs)');
-}
-
-// register new user
-  async function handleRegister() {
-    if (!name.trim() || !email.trim() || !password.trim()) {
-      Alert.alert('Missing fields', 'Please fill in all fields.');
+    if (!user || user.password !== hashedPassword) {
+      Alert.alert('Login failed', 'Email or password is incorrect.');
       return;
     }
 
-    // check if email already exists
+    const token = Math.random().toString(36).slice(2) + Date.now().toString(36);
+    await db.update(usersTable)
+      .set({ sessionToken: token })
+      .where(eq(usersTable.id, user.id));
+
+    await AsyncStorage.setItem('sessionToken', token);
+    router.replace('/(tabs)');
+  } catch (e) {
+    console.log('Login error:', e);
+    Alert.alert('Error', 'Something went wrong. Please try again.');
+  }
+}
+
+async function handleRegister() {
+  if (!name.trim() || !email.trim() || !password.trim()) {
+    Alert.alert('Missing fields', 'Please fill in all fields.');
+    return;
+  }
+  try {
     const existing = await db.select().from(usersTable)
       .where(eq(usersTable.email, email.trim().toLowerCase()));
     if (existing.length > 0) {
       Alert.alert('Already registered', 'An account with that email already exists.');
       return;
     }
-    
-// hash password before saving
-const hashedPassword = await Crypto.digestStringAsync(
-  Crypto.CryptoDigestAlgorithm.SHA256,
-  password
-);
 
-// create user
-await db.insert(usersTable).values({
-  name: name.trim(),
-  email: email.trim().toLowerCase(),
-  password: hashedPassword,
-  createdAt: new Date().toISOString(),
-});
+    const hashedPassword = await Crypto.digestStringAsync(
+      Crypto.CryptoDigestAlgorithm.SHA256,
+      password
+    );
+
+    await db.insert(usersTable).values({
+      name: name.trim(),
+      email: email.trim().toLowerCase(),
+      password: hashedPassword,
+      createdAt: new Date().toISOString(),
+    });
     Alert.alert('Account created!', 'You can now log in.');
     setMode('login');
+  } catch (e) {
+    console.log('Register error:', e);
+    Alert.alert('Error', 'Something went wrong. Please try again.');
   }
-
+}
   return (
     <SafeAreaView style={styles.safe}>
+      <KeyboardAvoidingView
+    style={{ flex: 1 }}
+    behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+  >
       <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
         {/* app logo */}
 <Image
@@ -252,6 +255,7 @@ await db.insert(usersTable).values({
           </Text>
         </TouchableOpacity>
       </ScrollView>
+      </KeyboardAvoidingView>
     </SafeAreaView>
   );
 }

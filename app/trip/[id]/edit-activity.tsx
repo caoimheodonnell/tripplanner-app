@@ -7,10 +7,11 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
 import {
   Alert,
+  KeyboardAvoidingView, Platform,
   SafeAreaView, ScrollView,
   StyleSheet,
   Text, TextInput, TouchableOpacity,
-  View,
+  View
 } from 'react-native';
 
 // check if date is valid (YYYY-MM-DD)
@@ -113,6 +114,10 @@ export default function EditActivityScreen() {
 
   return (
     <SafeAreaView style={styles.safe}>
+      <KeyboardAvoidingView
+    style={{ flex: 1 }}
+    behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+  >
       <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
         {/* header with cancel and save */}
         <View style={styles.header}>
@@ -132,7 +137,7 @@ export default function EditActivityScreen() {
         {/* date */}
         <View style={styles.field}>
           <Text style={styles.label}>Date (YYYY-MM-DD)</Text>
-          <TextInput style={styles.input} value={date} onChangeText={setDate} keyboardType="numeric" accessibilityLabel="Date" />
+          <TextInput style={styles.input} value={date} onChangeText={setDate}  accessibilityLabel="Date" />
         </View>
         {/* category selection */}
         <View style={styles.field}>
@@ -159,7 +164,7 @@ export default function EditActivityScreen() {
         {/* duration */}
         <View style={styles.field}>
           <Text style={styles.label}>Duration (minutes)</Text>
-          <TextInput style={styles.input} value={duration} onChangeText={setDuration} keyboardType="numeric" accessibilityLabel="Duration" />
+          <TextInput style={styles.input} value={duration} onChangeText={setDuration}  accessibilityLabel="Duration" />
         </View>
         <View style={styles.field}>
           <Text style={styles.label}>Notes (optional)</Text>
@@ -178,6 +183,7 @@ export default function EditActivityScreen() {
           </View>
 </TouchableOpacity>
       </ScrollView>
+      </KeyboardAvoidingView>
     </SafeAreaView>
   );
 }

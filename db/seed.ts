@@ -1,4 +1,3 @@
-import { sql } from 'drizzle-orm';
 import { db } from './client';
 import {
   activitiesTable,
@@ -14,68 +13,8 @@ export async function seedIfEmpty() {
 const existingCats = await db.select().from(categoriesTable);
 if (existingCats.length > 0) return;
 
+
   
-  await db.run(sql`
-    CREATE TABLE IF NOT EXISTS categories (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      name TEXT NOT NULL,
-      colour TEXT NOT NULL,
-      icon TEXT NOT NULL
-    );
-  `);
-
-  await db.run(sql`
-    CREATE TABLE IF NOT EXISTS users (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      name TEXT NOT NULL,
-      email TEXT NOT NULL,
-      password TEXT NOT NULL,
-      session_token TEXT,
-      created_at TEXT NOT NULL
-    );
-  `);
-
-  await db.run(sql`
-    CREATE TABLE IF NOT EXISTS trips (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      name TEXT NOT NULL,
-      user_id INTEGER NOT NULL,
-      destination TEXT NOT NULL,
-      start_date TEXT NOT NULL,
-      end_date TEXT NOT NULL,
-      cover_colour TEXT NOT NULL,
-      notes TEXT,
-      created_at TEXT NOT NULL
-    );
-  `);
-
-  await db.run(sql`
-    CREATE TABLE IF NOT EXISTS activities (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      trip_id INTEGER NOT NULL,
-      user_id INTEGER NOT NULL,
-      category_id INTEGER NOT NULL,
-      name TEXT NOT NULL,
-      date TEXT NOT NULL,
-      duration_minutes INTEGER,
-      count INTEGER DEFAULT 1,
-      notes TEXT,
-      created_at TEXT NOT NULL
-    );
-  `);
-
-  await db.run(sql`
-    CREATE TABLE IF NOT EXISTS targets (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      label TEXT NOT NULL,
-      period TEXT NOT NULL,
-      user_id INTEGER NOT NULL,
-      target_value REAL NOT NULL,
-      unit TEXT NOT NULL,
-      category_id INTEGER,
-      created_at TEXT NOT NULL
-    );
-  `);
 
   // add default categories
   const categories = await db

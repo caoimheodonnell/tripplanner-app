@@ -2,12 +2,21 @@ import { ThemeProvider, useTheme } from '@/context/ThemeContext';
 import { seedIfEmpty } from '@/db/seed';
 import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import * as Notifications from 'expo-notifications';
 import { Stack } from 'expo-router';
 import { useEffect, useRef, useState } from 'react';
-import { Animated, Easing, LogBox, StyleSheet, Text, View } from 'react-native';
+import { Animated, Easing, LogBox, Platform, StyleSheet, Text, View } from 'react-native';
 
 LogBox.ignoreLogs(['expo-notifications: Android Push']);
 
+Notifications.setNotificationHandler({
+  handleNotification: async () => ({
+    shouldShowBanner: true,
+    shouldShowList: true,
+    shouldPlaySound: true,
+    shouldSetBadge: false,
+  }),
+});
 
 export default function RootLayout() {
   return (
@@ -63,13 +72,22 @@ function AppContent() {
 
   useEffect(() => {
     async function init() {
-      await seedIfEmpty();
-
-      // check if user is logged in
-      const token = await AsyncStorage.getItem('sessionToken');
-setLoggedIn(!!token);
-      setReady(true);
-    }
+  try {
+     if (Platform.OS === 'android') {                          // ← ADD THESE 5 LINES
+          await Notifications.setNotificationChannelAsync('default', {
+            name: 'default',
+            importance: Notifications.AndroidImportance.MAX,
+          });
+        } 
+    seedIfEmpty().catch(console.log);
+    const token = await AsyncStorage.getItem('sessionToken');
+    setLoggedIn(!!token);
+  } catch (e) {
+    console.log('Init error:', e);
+  } finally {
+    setReady(true);
+  }
+}
     init();
   }, []);
 

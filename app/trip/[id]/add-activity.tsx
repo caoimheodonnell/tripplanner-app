@@ -194,7 +194,7 @@ async function handleSave() {
       {/* date input */}
         <View style={styles.field}>
           <Text style={styles.label}>Date (YYYY-MM-DD) <Text style={{color: colours.error}}>*</Text></Text>
-          <TextInput style={styles.input} placeholder="2026-06-12" placeholderTextColor={colours.textMuted} value={date} onChangeText={setDate} keyboardType="numeric" accessibilityLabel="Date" />
+          <TextInput style={styles.input} placeholder="2026-06-12" placeholderTextColor={colours.textMuted} value={date} onChangeText={setDate} accessibilityLabel="Date" />
         </View>
 
 {/* category choice*/}
@@ -242,7 +242,7 @@ async function handleSave() {
 
         <View style={styles.field}>
           <Text style={styles.label}>Duration (minutes)</Text>
-          <TextInput style={styles.input} placeholder="e.g. 90" placeholderTextColor={colours.textMuted} value={duration} onChangeText={setDuration} keyboardType="numeric" accessibilityLabel="Duration in minutes" />
+          <TextInput style={styles.input} placeholder="e.g. 90" placeholderTextColor={colours.textMuted} value={duration} onChangeText={setDuration} accessibilityLabel="Duration in minutes" />
         </View>
 
         <View style={styles.field}>
